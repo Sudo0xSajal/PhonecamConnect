@@ -20,9 +20,9 @@
 
 | What | File | Platform |
 |---|---|---|
-| **Desktop App** | [`PhoneCam-Setup.exe`](https://github.com/Sudo0xSajal/phonecam/releases/latest/download/PhoneCam-Setup.exe) | Windows 10/11 64-bit |
-| **Virtual Camera Driver** | [`PhoneCam-Driver.zip`](https://github.com/Sudo0xSajal/phonecam/releases/latest/download/PhoneCam-Driver.zip) | Windows 10/11 64-bit |
-| **Android App** | [`PhoneCam.apk`](https://github.com/Sudo0xSajal/phonecam/releases/latest/download/PhoneCam.apk) | Android 8.0+ |
+| **Desktop App** | [`PhoneCam.Connect.Setup.1.0.0.exe`](https://github.com/Sudo0xSajal/PhonecamConnect/releases/download/v1.0.0/PhoneCam.Connect.Setup.1.0.0.exe) | Windows 10/11 64-bit |
+| **Virtual Camera Driver** | [`PhoneCam-Driver.zip`](https://github.com/Sudo0xSajal/PhonecamConnect/blob/main/driver/README.md) | Windows 10/11 64-bit |
+| **Android App** | [`Phonecam-Connect.apk`](https://github.com/Sudo0xSajal/PhonecamConnect/releases/download/v1.0.0/Phonecam-Connect.apk) | Android 8.0+ |
 
 > All links always point to the **latest release** automatically.
 
@@ -138,8 +138,8 @@ Build the virtual camera driver separately, zip the installer, and attach as `Ph
 | Component | Folder | Produces | Upload as |
 |---|---|---|---|
 | Landing page | `website/` | `index.html` | GitHub Pages |
-| Windows app | `desktop/` | `PhoneCam-Setup.exe` | GitHub Release asset |
-| Android app | `android/` | `PhoneCam.apk` | GitHub Release asset |
+| Windows app | `desktop/` | `PhoneCam.Connect.Setup.1.0.0.exe` | GitHub Release asset |
+| Android app | `android/` | `Phonecam-Connect.apk` | GitHub Release asset |
 | Camera driver | `driver/` | `PhoneCam-Driver.zip` | GitHub Release asset |
 
 ---
