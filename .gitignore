@@ -1,0 +1,21 @@
+# Desktop (Electron)
+desktop/node_modules/
+desktop/dist/
+
+# Android
+android/build/
+android/app/build/
+android/local.properties
+*.apk
+*.aab
+
+# Driver
+driver/build/
+driver/dist/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+*.iml
+.vscode/

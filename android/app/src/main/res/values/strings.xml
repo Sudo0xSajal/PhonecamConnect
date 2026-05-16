@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PhoneCam</string>
+
+    <!-- Connect screen -->
+    <string name="btn_scan_qr">📷  Scan QR Code</string>
+    <string name="hint_manual_url">ws://192.168.x.x:7779  or  http://192.168.x.x:7780</string>
+    <string name="btn_connect">Connect</string>
+    <string name="or_manual">or enter URL manually</string>
+
+    <!-- Streaming screen -->
+    <string name="btn_flip">🔄 Flip</string>
+    <string name="btn_torch">🔦 Torch</string>
+    <string name="btn_disconnect">Disconnect</string>
+
+    <!-- Status labels -->
+    <string name="status_live">● LIVE</string>
+    <string name="status_offline">○ Offline</string>
+    <string name="status_connecting">🔄 Connecting…</string>
+    <string name="status_streaming">🟢 Streaming</string>
+    <string name="status_reconnecting">🔄 Lost — retrying…</string>
+    <string name="status_no_wifi">📶 No WiFi</string>
+
+    <!-- QR scan -->
+    <string name="qr_instruction">Point at the QR code on your desktop</string>
+    <string name="btn_back">← Back</string>
+
+    <!-- Errors -->
+    <string name="err_camera_permission">Camera permission is required</string>
+    <string name="err_empty_url">Enter a URL, e.g. ws://192.168.1.42:7779</string>
+    <string name="err_invalid_url">URL must start with ws://, wss://, or http://</string>
+</resources>

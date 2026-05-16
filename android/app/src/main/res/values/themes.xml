@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.PhoneCam" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">#1B6FEB</item>
+        <item name="colorPrimaryVariant">#1558C0</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorSecondary">#16C784</item>
+        <item name="colorOnSecondary">#000000</item>
+        <item name="colorSurface">#161512</item>
+        <item name="colorOnSurface">#F0EDE6</item>
+        <item name="android:colorBackground">#0F0E0C</item>
+        <item name="android:windowBackground">#0F0E0C</item>
+        <item name="android:statusBarColor">#0F0E0C</item>
+        <item name="android:navigationBarColor">#0F0E0C</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <style name="Theme.PhoneCam.Fullscreen" parent="Theme.PhoneCam">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+    </style>
+</resources>

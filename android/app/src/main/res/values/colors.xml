@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand -->
+    <color name="accent_blue">#1B6FEB</color>
+    <color name="accent_blue_dark">#1558C0</color>
+    <color name="accent_green">#16C784</color>
+    <color name="accent_red">#FF4757</color>
+    <color name="accent_yellow">#FFA502</color>
+
+    <!-- Backgrounds -->
+    <color name="bg">#0F0E0C</color>
+    <color name="bg2">#161512</color>
+    <color name="bg3">#1E1C18</color>
+
+    <!-- Text -->
+    <color name="text_primary">#F0EDE6</color>
+    <color name="text_secondary">#9A9080</color>
+    <color name="text_muted">#5A5248</color>
+
+    <!-- Borders -->
+    <color name="border">#2A2721</color>
+    <color name="border2">#342F28</color>
+
+    <!-- Status -->
+    <color name="status_live">#16C784</color>
+    <color name="status_offline">#5A5248</color>
+    <color name="overlay_dark">#88000000</color>
+</resources>

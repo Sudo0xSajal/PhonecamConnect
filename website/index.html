@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>PhoneCam Connect — Turn Your Android Into a Pro Webcam</title>
+<meta name="description" content="Stream your Android phone camera as a real Windows webcam. No OBS needed. Works in Zoom, Teams, Meet, WhatsApp. Free download."/>
+<meta property="og:title" content="PhoneCam Connect"/>
+<meta property="og:description" content="Turn your Android into a professional webcam. Zero cloud, zero latency, 100% local WiFi."/>
+<meta property="og:type" content="website"/>
+<meta name="theme-color" content="#0F0E0C"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:       #0B0A08;
+  --bg2:      #121110;
+  --bg3:      #1A1916;
+  --border:   #252320;
+  --border2:  #2E2C29;
+  --text:     #F2EFE9;
+  --text2:    #9A9080;
+  --text3:    #5A5248;
+  --accent:   #1B6FEB;
+  --accent2:  #1459C4;
+  --green:    #16C784;
+  --orange:   #F5A623;
+  --red:      #EA3943;
+  --font:     'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --mono:     'JetBrains Mono','Fira Code',monospace;
+  --r:        14px;
+  --r2:       20px;
+  --glow:     0 0 60px rgba(27,111,235,.15);
+}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
+body{background:var(--bg);color:var(--text);font-family:var(--font);line-height:1.6;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+::selection{background:rgba(27,111,235,.35)}
+
+/* ── Typography ── */
+h1{font-size:clamp(2.4rem,5vw,4rem);font-weight:900;letter-spacing:-.03em;line-height:1.1}
+h2{font-size:clamp(1.6rem,3vw,2.4rem);font-weight:800;letter-spacing:-.02em;line-height:1.2}
+h3{font-size:1.15rem;font-weight:700}
+p{color:var(--text2);line-height:1.7}
+
+/* ── Layout ── */
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+.section{padding:96px 0}
+.section-sm{padding:64px 0}
+
+/* ── Nav ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;
+  background:rgba(11,10,8,.85);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);transition:all .2s}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;
+  max-width:1120px;margin:0 auto;padding:0 24px;height:60px}
+.nav-logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1rem}
+.nav-logo-icon{width:28px;height:28px;background:var(--accent);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;font-size:15px}
+.nav-links{display:flex;align-items:center;gap:28px}
+.nav-links a{font-size:.875rem;color:var(--text2);transition:color .15s}
+.nav-links a:hover{color:var(--text)}
+.nav-cta{background:var(--accent);color:#fff!important;padding:8px 18px;
+  border-radius:8px;font-size:.875rem;font-weight:600;transition:background .15s!important}
+.nav-cta:hover{background:var(--accent2)!important}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:13px 26px;
+  border-radius:10px;font-size:.95rem;font-weight:600;cursor:pointer;
+  border:none;transition:all .15s;text-decoration:none}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent2);transform:translateY(-1px)}
+.btn-secondary{background:var(--bg3);color:var(--text);border:1px solid var(--border2)}
+.btn-secondary:hover{background:#222;border-color:#3a3835}
+.btn-lg{padding:16px 32px;font-size:1rem;border-radius:12px}
+.btn-sm{padding:9px 18px;font-size:.82rem;border-radius:8px}
+
+/* ── Hero ── */
+.hero{min-height:100vh;display:flex;align-items:center;
+  background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(27,111,235,.12),transparent);
+  padding:80px 0 60px}
+.hero-inner{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;
+  background:rgba(22,199,132,.1);color:var(--green);
+  border:1px solid rgba(22,199,132,.25);border-radius:20px;
+  padding:5px 14px;font-size:.8rem;font-weight:700;margin-bottom:24px;
+  letter-spacing:.04em;text-transform:uppercase}
+.hero-badge-dot{width:6px;height:6px;border-radius:50%;background:var(--green);
+  animation:pulse-g 1.5s infinite}
+@keyframes pulse-g{0%,100%{opacity:1}50%{opacity:.4}}
+.hero h1{margin-bottom:20px}
+.hero h1 span{background:linear-gradient(135deg,var(--accent),#60A5FA);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:1.1rem;margin-bottom:36px;max-width:480px}
+.hero-actions{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:40px}
+.hero-trust{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.trust-item{display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--text3)}
+.trust-check{color:var(--green);font-size:.9rem}
+.hero-visual{position:relative}
+.hero-phone-wrap{position:relative;border-radius:24px;overflow:hidden;
+  background:var(--bg3);border:1px solid var(--border2);
+  box-shadow:0 40px 100px rgba(0,0,0,.6),var(--glow)}
+.hero-screen{background:linear-gradient(160deg,#0f0e0c 0%,#161412 100%);
+  padding:24px;border-radius:24px}
+.screen-bar{display:flex;align-items:center;gap:8px;margin-bottom:18px}
+.screen-dot{width:10px;height:10px;border-radius:50%}
+
+/* ── 3D QR Scanner Preview ── */
+.screen-preview{
+  background:#000;border-radius:12px;aspect-ratio:16/9;
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:14px;position:relative;overflow:hidden;
+}
+.screen-preview-live{position:absolute;top:10px;right:10px;
+  background:rgba(22,199,132,.9);color:#fff;font-size:.7rem;font-weight:700;
+  padding:3px 8px;border-radius:6px;letter-spacing:.06em;z-index:10;
+  animation:live-blink 2s ease-in-out infinite}
+@keyframes live-blink{0%,100%{opacity:1}50%{opacity:.7}}
+
+/* 3D scene container */
+.qr-scene{
+  width:100%;height:100%;position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  perspective:600px;
+  background:radial-gradient(ellipse at 40% 40%,#0a1628 0%,#000 70%);
+}
+
+/* Grid floor lines for depth */
+.qr-grid{
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(27,111,235,.07) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(27,111,235,.07) 1px,transparent 1px);
+  background-size:20px 20px;
+  animation:grid-scroll 8s linear infinite;
+}
+@keyframes grid-scroll{from{background-position:0 0}to{background-position:0 20px}}
+
+/* Ambient particles */
+.qr-particle{
+  position:absolute;width:2px;height:2px;border-radius:50%;
+  background:var(--accent);opacity:0;
+  animation:particle-float var(--dur,4s) ease-in-out var(--delay,0s) infinite;
+}
+@keyframes particle-float{
+  0%{transform:translateY(0) translateX(0);opacity:0}
+  20%{opacity:.6}
+  80%{opacity:.3}
+  100%{transform:translateY(-60px) translateX(var(--dx,10px));opacity:0}
+}
+
+/* QR code 3D card */
+.qr-card-3d{
+  position:relative;
+  transform-style:preserve-3d;
+  animation:qr-float 5s ease-in-out infinite, qr-rotate 8s ease-in-out infinite;
+  z-index:2;
+}
+@keyframes qr-float{
+  0%,100%{transform:translateY(0px) rotateX(12deg) rotateY(-8deg)}
+  50%{transform:translateY(-8px) rotateX(8deg) rotateY(8deg)}
+}
+@keyframes qr-rotate{
+  0%,100%{filter:drop-shadow(0 16px 32px rgba(27,111,235,.5))}
+  50%{filter:drop-shadow(0 24px 48px rgba(27,111,235,.8))}
+}
+
+/* QR frame */
+.qr-frame{
+  width:100px;height:100px;position:relative;
+  background:rgba(255,255,255,.03);
+  border-radius:10px;
+  border:1px solid rgba(27,111,235,.3);
+  padding:8px;
+}
+.qr-corners::before,.qr-corners::after,
+.qr-corners span::before,.qr-corners span::after{
+  content:'';position:absolute;width:16px;height:16px;
+  border-color:var(--accent);border-style:solid;
+}
+.qr-corners::before{top:0;left:0;border-width:2.5px 0 0 2.5px;border-radius:4px 0 0 0}
+.qr-corners::after{top:0;right:0;border-width:2.5px 2.5px 0 0;border-radius:0 4px 0 0}
+.qr-corners span::before{bottom:0;left:0;border-width:0 0 2.5px 2.5px;border-radius:0 0 0 4px}
+.qr-corners span::after{bottom:0;right:0;border-width:0 2.5px 2.5px 0;border-radius:0 0 4px 0}
+
+/* Actual QR pattern (SVG-like grid) */
+.qr-pixels{
+  display:grid;grid-template-columns:repeat(11,1fr);gap:1px;
+  width:100%;height:100%;
+}
+.qr-px{border-radius:1px;transition:background .1s}
+
+/* Scanner laser line */
+.qr-laser{
+  position:absolute;left:8px;right:8px;height:2px;top:8px;z-index:3;
+  background:linear-gradient(90deg,transparent,var(--green),var(--green),transparent);
+  border-radius:1px;
+  animation:laser-scan 2.5s ease-in-out infinite;
+  box-shadow:0 0 8px var(--green),0 0 20px rgba(22,199,132,.4);
+}
+@keyframes laser-scan{
+  0%{top:8px;opacity:0}
+  10%{opacity:1}
+  90%{opacity:1}
+  100%{top:calc(100% - 10px);opacity:0}
+}
+
+/* Connection ring effect */
+.qr-ring{
+  position:absolute;border-radius:50%;
+  border:2px solid var(--green);
+  animation:ring-expand var(--dur,2s) ease-out var(--delay,0s) infinite;
+  opacity:0;
+  z-index:1;
+}
+@keyframes ring-expand{
+  0%{width:30px;height:30px;opacity:.8;margin:-15px}
+  100%{width:120px;height:120px;opacity:0;margin:-60px}
+}
+
+/* Connected tick */
+.qr-connected{
+  position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
+  display:flex;align-items:center;gap:5px;
+  background:rgba(22,199,132,.15);border:1px solid rgba(22,199,132,.35);
+  border-radius:20px;padding:3px 10px;
+  font-size:.6rem;font-weight:700;color:var(--green);
+  letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;z-index:5;
+  animation:connected-pulse 3s ease-in-out infinite;
+}
+@keyframes connected-pulse{0%,100%{opacity:1}50%{opacity:.7}}
+.qr-connected-dot{width:5px;height:5px;border-radius:50%;background:var(--green);
+  animation:pulse-g 1s infinite}
+
+/* Phone beam from QR */
+.qr-beam{
+  position:absolute;right:0;top:50%;width:50%;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(27,111,235,.4));
+  transform:translateY(-50%);z-index:1;
+  animation:beam-pulse 2.5s ease-in-out infinite;
+}
+@keyframes beam-pulse{0%,100%{opacity:0}50%{opacity:1}}
+
+.screen-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.screen-stat{background:rgba(255,255,255,.04);border-radius:8px;padding:8px 10px;
+  border:1px solid var(--border)}
+.screen-stat-val{font-size:1rem;font-weight:800;color:var(--green);font-family:var(--mono)}
+.screen-stat-lbl{font-size:.65rem;color:var(--text3);text-transform:uppercase;
+  letter-spacing:.06em;margin-top:1px}
+.hero-float{position:absolute;background:var(--bg2);border:1px solid var(--border2);
+  border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:8px;
+  font-size:.8rem;font-weight:600;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.hero-float-1{bottom:-16px;left:-20px}
+.hero-float-2{top:-16px;right:-20px}
+.float-icon{font-size:1.1rem}
+
+/* ── How it works ── */
+.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;margin-top:52px}
+.flow-step{background:var(--bg2);padding:32px 28px;border:1px solid var(--border);
+  position:relative}
+.flow-num{font-size:2.5rem;font-weight:900;color:var(--accent);
+  font-family:var(--mono);opacity:.3;line-height:1;margin-bottom:12px}
+.flow-arrow{position:absolute;right:-14px;top:36px;
+  z-index:1;width:28px;height:28px;background:var(--bg);border:1px solid var(--border2);
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:.85rem;color:var(--accent);font-weight:700}
+.flow-step:last-child .flow-arrow{display:none}
+
+/* ── Features grid ── */
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:52px}
+.feat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);
+  padding:28px;transition:border-color .2s,transform .2s}
+.feat:hover{border-color:var(--border2);transform:translateY(-2px)}
+.feat-icon{font-size:1.8rem;margin-bottom:14px;
+  background:var(--bg3);width:48px;height:48px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center}
+.feat h3{margin-bottom:6px;font-size:1rem}
+.feat p{font-size:.875rem;color:var(--text3);line-height:1.6}
+
+/* ── Comparison table ── */
+.compare-wrap{margin-top:52px;border:1px solid var(--border);border-radius:var(--r2);
+  overflow:hidden;overflow-x:auto}
+.compare-table{width:100%;border-collapse:collapse;min-width:700px}
+.compare-table th{background:var(--bg2);padding:11px 14px;text-align:center;
+  font-size:.75rem;font-weight:700;color:var(--text3);text-transform:uppercase;
+  letter-spacing:.05em;border-bottom:1px solid var(--border);white-space:nowrap}
+.compare-table th:first-child{text-align:left;min-width:180px}
+.compare-table td{padding:12px 14px;border-bottom:1px solid var(--border);
+  font-size:.875rem;color:var(--text2);text-align:center;vertical-align:middle}
+.compare-table td:first-child{text-align:left}
+.compare-table tr:last-child td{border-bottom:none}
+.compare-table tr:hover td{background:rgba(255,255,255,.025)}
+.yes{color:var(--green);font-size:1.1rem;font-weight:700}
+.no{color:var(--text3);font-size:1rem}
+.highlight-col{background:rgba(27,111,235,.06)!important}
+.compare-header-highlight{background:rgba(27,111,235,.12)!important;color:var(--accent)!important}
+
+/* ── Setup steps ── */
+.steps{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:52px}
+.step{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);
+  padding:28px 28px 28px 70px;position:relative}
+.step-num{position:absolute;left:24px;top:28px;width:32px;height:32px;
+  border-radius:50%;background:var(--accent);color:#fff;font-size:.85rem;
+  font-weight:800;display:flex;align-items:center;justify-content:center}
+.step h3{margin-bottom:6px}
+.step p{font-size:.875rem;color:var(--text3)}
+.step code{display:block;background:var(--bg3);border:1px solid var(--border2);
+  border-radius:8px;padding:8px 12px;font-family:var(--mono);font-size:.8rem;
+  color:var(--accent);margin-top:10px}
+
+/* ── Driver section ── */
+.driver-card{background:linear-gradient(135deg,var(--bg2),var(--bg3));
+  border:1px solid var(--border2);border-radius:24px;padding:48px;
+  display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;margin-top:52px}
+.driver-badge{display:inline-flex;align-items:center;gap:6px;
+  background:rgba(245,166,35,.1);color:var(--orange);
+  border:1px solid rgba(245,166,35,.25);border-radius:20px;
+  padding:4px 12px;font-size:.75rem;font-weight:700;margin-bottom:16px;text-transform:uppercase;letter-spacing:.05em}
+.driver-apps{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.driver-app{background:var(--bg);border:1px solid var(--border);border-radius:8px;
+  padding:6px 12px;font-size:.8rem;font-weight:600;color:var(--text2)}
+.driver-steps{display:flex;flex-direction:column;gap:14px}
+.driver-step{display:flex;gap:14px;align-items:flex-start}
+.driver-step-num{width:28px;height:28px;border-radius:50%;background:rgba(27,111,235,.15);
+  border:1px solid rgba(27,111,235,.3);color:var(--accent);font-size:.8rem;
+  font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.driver-step-text{font-size:.9rem;color:var(--text2)}
+.driver-step-text strong{color:var(--text)}
+
+/* ── Coming Soon Badge/Button ── */
+.coming-soon-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(245,166,35,.08);
+  border:1px solid rgba(245,166,35,.25);
+  color:var(--orange);
+  padding:13px 26px;border-radius:10px;
+  font-size:.95rem;font-weight:700;
+  cursor:not-allowed;
+  transition:all .15s;
+  letter-spacing:.01em;
+  position:relative;
+  overflow:hidden;
+}
+.coming-soon-btn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(245,166,35,.05),transparent);
+  animation:shimmer 3s ease-in-out infinite;
+}
+@keyframes shimmer{
+  0%{transform:translateX(-100%)}
+  100%{transform:translateX(100%)}
+}
+.coming-soon-badge-inline{
+  display:inline-flex;align-items:center;gap:5px;
+  background:rgba(245,166,35,.1);color:var(--orange);
+  border:1px solid rgba(245,166,35,.2);border-radius:20px;
+  padding:2px 10px;font-size:.7rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:.05em;
+  margin-left:6px;vertical-align:middle;
+}
+
+/* ── Testimonials / stats ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;margin-top:52px}
+.stat-box{background:var(--bg2);padding:32px 24px;text-align:center;border:1px solid var(--border)}
+.stat-box:first-child{border-radius:16px 0 0 16px}
+.stat-box:last-child{border-radius:0 16px 16px 0}
+.stat-val{font-size:2.4rem;font-weight:900;font-family:var(--mono);
+  background:linear-gradient(135deg,var(--accent),#60A5FA);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.stat-lbl{font-size:.8rem;color:var(--text3);margin-top:4px;text-transform:uppercase;letter-spacing:.06em}
+
+/* ── Tech specs ── */
+.tech-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:52px}
+.tech-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:28px}
+.tech-card h3{margin-bottom:16px;display:flex;align-items:center;gap:8px;font-size:.95rem}
+.tech-list{list-style:none;display:flex;flex-direction:column;gap:8px}
+.tech-list li{display:flex;justify-content:space-between;align-items:center;
+  font-size:.875rem;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.tech-list li:last-child{border-bottom:none;padding-bottom:0}
+.tech-list .lbl{color:var(--text2)}
+.tech-list .val{color:var(--text);font-family:var(--mono);font-size:.8rem;
+  background:var(--bg3);padding:2px 8px;border-radius:6px;border:1px solid var(--border)}
+
+/* ── Download section ── */
+.download-section{background:radial-gradient(ellipse 80% 100% at 50% 100%,rgba(27,111,235,.1),transparent);
+  padding:96px 0;text-align:center}
+.download-card{background:var(--bg2);border:1px solid var(--border2);border-radius:24px;
+  padding:52px;max-width:640px;margin:48px auto 0;
+  box-shadow:0 40px 80px rgba(0,0,0,.4)}
+.download-os{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:28px}
+
+/* Main download button (Windows only - active) */
+.download-os-btn{display:flex;align-items:center;gap:10px;background:var(--bg3);
+  border:1px solid var(--border2);border-radius:12px;padding:14px 22px;
+  font-size:.9rem;font-weight:600;cursor:pointer;transition:all .15s;
+  text-decoration:none;color:var(--text);position:relative}
+.download-os-btn.active-download:hover{border-color:var(--accent);background:rgba(27,111,235,.08)}
+.download-os-btn.platform-soon{
+  cursor:not-allowed;
+  opacity:.55;
+  border-style:dashed;
+  border-color:var(--border);
+  pointer-events:none;
+}
+.download-os-btn.platform-soon .os-soon-tag{
+  position:absolute;top:-8px;right:-2px;
+  background:rgba(245,166,35,.15);border:1px solid rgba(245,166,35,.3);
+  color:var(--orange);font-size:.6rem;font-weight:800;
+  padding:1px 7px;border-radius:10px;text-transform:uppercase;letter-spacing:.05em;
+  white-space:nowrap;
+}
+.download-os-btn .os-icon{font-size:1.4rem}
+.download-note{font-size:.8rem;color:var(--text3);margin-top:20px}
+
+/* Phone store buttons - coming soon style */
+.store-btn-soon{
+  display:flex;align-items:center;gap:10px;
+  background:rgba(245,166,35,.04);
+  border:1px dashed rgba(245,166,35,.2);
+  border-radius:12px;padding:14px 22px;
+  font-size:.9rem;font-weight:600;cursor:not-allowed;
+  color:var(--text3);position:relative;
+  transition:all .15s;
+}
+.store-btn-soon .os-icon{font-size:1.4rem;opacity:.5}
+.store-btn-soon .soon-label{
+  position:absolute;top:-8px;right:-2px;
+  background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.25);
+  color:var(--orange);font-size:.6rem;font-weight:800;
+  padding:1px 7px;border-radius:10px;text-transform:uppercase;letter-spacing:.05em;
+}
+
+/* Download progress toast */
+.download-toast{
+  position:fixed;bottom:24px;right:24px;z-index:999;
+  background:var(--bg2);border:1px solid var(--border2);
+  border-radius:16px;padding:16px 20px;
+  display:flex;align-items:center;gap:14px;
+  min-width:280px;
+  box-shadow:0 16px 40px rgba(0,0,0,.5);
+  transform:translateY(100px);opacity:0;
+  transition:all .4s cubic-bezier(.34,1.56,.64,1);
+  pointer-events:none;
+}
+.download-toast.show{transform:translateY(0);opacity:1}
+.toast-icon{font-size:1.4rem}
+.toast-title{font-size:.9rem;font-weight:700;color:var(--text);margin-bottom:2px}
+.toast-sub{font-size:.75rem;color:var(--text3)}
+.toast-progress{margin-top:10px;height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+.toast-progress-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--green));
+  border-radius:2px;width:0;transition:width .1s linear}
+
+/* ── Footer ── */
+footer{background:var(--bg2);border-top:1px solid var(--border);padding:52px 0 32px}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
+.footer-brand p{font-size:.875rem;color:var(--text3);margin-top:10px;line-height:1.7;max-width:260px}
+.footer-col h4{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+  color:var(--text3);margin-bottom:14px}
+.footer-col ul{list-style:none;display:flex;flex-direction:column;gap:8px}
+.footer-col ul li a{font-size:.875rem;color:var(--text3);transition:color .15s}
+.footer-col ul li a:hover{color:var(--text)}
+.footer-bottom{border-top:1px solid var(--border);padding-top:24px;
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.footer-bottom p{font-size:.8rem;color:var(--text3)}
+
+/* ── Section headers ── */
+.section-label{display:inline-flex;align-items:center;gap:6px;
+  font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;
+  color:var(--accent);margin-bottom:12px}
+.section-label::before{content:'';width:20px;height:1px;background:var(--accent)}
+
+/* ── Code block ── */
+pre{background:var(--bg2);border:1px solid var(--border);border-radius:12px;
+  padding:20px;overflow-x:auto;font-family:var(--mono);font-size:.8rem;
+  color:#A8D8A8;line-height:1.6;margin-top:16px}
+code{font-family:var(--mono);font-size:.85em;color:var(--accent);
+  background:rgba(27,111,235,.1);padding:2px 6px;border-radius:4px}
+
+/* ── Responsive ── */
+@media(max-width:1050px){
+  .flow{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:900px){
+  .hero-inner,.driver-card,.footer-grid{grid-template-columns:1fr}
+  .hero-visual{display:none}
+  .flow,.features-grid,.stats-row,.steps,.tech-grid{grid-template-columns:1fr}
+  .flow-step{border-radius:var(--r)!important}
+  .flow-step .flow-arrow{display:none}
+  .stat-box{border-radius:var(--r)!important}
+  .nav-links .nav-link-hide{display:none}
+}
+@media(max-width:600px){
+  .section{padding:64px 0}
+  h1{font-size:2.2rem}
+  .btn-lg{padding:13px 22px;font-size:.9rem}
+  .wrap{padding:0 16px}
+}
+</style>
+</head>
+<body>
+
+<!-- ── Navigation ── -->
+<nav>
+  <div class="nav-inner">
+    <a href="#" class="nav-logo">
+      <div class="nav-logo-icon">📱</div>
+      PhoneCam Connect
+    </a>
+    <div class="nav-links">
+      <a href="#how-it-works" class="nav-link-hide">How It Works</a>
+      <a href="#setup" class="nav-link-hide">Setup</a>
+      <a href="#features" class="nav-link-hide">Features</a>
+      <a href="#driver" class="nav-link-hide">Native Driver</a>
+      <a href="#download" class="nav-link-hide">Download</a>
+      <a href="https://github.com/sudo0xsajal/PhonecamConnect" class="nav-link-hide" target="_blank">GitHub</a>
+      <a href="#download" class="btn btn-sm nav-cta">⬇ Download Free</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ── Hero ── -->
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-inner">
+      <div>
+        <div class="hero-badge">
+          <span class="hero-badge-dot"></span>
+          100% Local · Zero Cloud
+        </div>
+        <h1>Your Phone Is a<br/><span>Pro Webcam</span></h1>
+        <p class="hero-sub">Stream your Android camera directly to Zoom, Teams, Meet, and every app — no cables, no OBS, no subscription. Pure local WiFi.</p>
+        <div class="hero-actions">
+          <a href="#download" class="btn btn-primary btn-lg">⬇ Download Free</a>
+          <a href="#driver" class="btn btn-secondary btn-lg">🎥 Native Driver</a>
+        </div>
+        <div class="hero-trust">
+          <span class="trust-item"><span class="trust-check">✓</span> Windows 10 / 11</span>
+          <span class="trust-item"><span class="trust-check">✓</span> Android</span>
+          <span class="trust-item"><span class="trust-check">✓</span> No account needed</span>
+          <span class="trust-item"><span class="trust-check">✓</span> Open source</span>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="hero-phone-wrap">
+          <div class="hero-screen">
+            <div class="screen-bar">
+              <div class="screen-dot" style="background:#ea3943"></div>
+              <div class="screen-dot" style="background:#f5a623"></div>
+              <div class="screen-dot" style="background:#16c784"></div>
+              <span style="margin-left:8px;font-size:.75rem;color:var(--text3)">PhoneCam Connect</span>
+            </div>
+
+            <!-- ── 3D QR Scanner Preview ── -->
+            <div class="screen-preview">
+              <div class="screen-preview-live">● CONNECTED</div>
+
+              <div class="qr-scene">
+                <!-- Background grid -->
+                <div class="qr-grid"></div>
+
+                <!-- Ambient particles -->
+                <div class="qr-particle" style="left:15%;top:60%;--dur:3.5s;--delay:0s;--dx:12px"></div>
+                <div class="qr-particle" style="left:30%;top:70%;--dur:4.2s;--delay:.7s;--dx:-8px"></div>
+                <div class="qr-particle" style="left:65%;top:65%;--dur:3.8s;--delay:1.2s;--dx:15px"></div>
+                <div class="qr-particle" style="left:80%;top:55%;--dur:5s;--delay:.3s;--dx:-12px"></div>
+                <div class="qr-particle" style="left:50%;top:75%;--dur:4s;--delay:2s;--dx:8px"></div>
+
+                <!-- Connection rings (centered) -->
+                <div class="qr-ring" style="--dur:2.5s;--delay:0s;left:50%;top:50%;"></div>
+                <div class="qr-ring" style="--dur:2.5s;--delay:.8s;left:50%;top:50%;"></div>
+                <div class="qr-ring" style="--dur:2.5s;--delay:1.6s;left:50%;top:50%;"></div>
+
+                <!-- 3D Floating QR Card -->
+                <div class="qr-card-3d">
+                  <div class="qr-frame">
+                    <!-- Corner brackets -->
+                    <div class="qr-corners" style="position:absolute;inset:0"><span></span></div>
+
+                    <!-- Laser scan line -->
+                    <div class="qr-laser"></div>
+
+                    <!-- QR pixel pattern (stylised, 11×11) -->
+                    <div class="qr-pixels" id="qrPixels"></div>
+                  </div>
+                </div>
+
+                <!-- Connected label -->
+                <div class="qr-connected" style="bottom:12px;">
+                  <div class="qr-connected-dot"></div>
+                  Device Linked
+                </div>
+              </div>
+            </div>
+            <!-- end screen-preview -->
+
+            <div class="screen-stats">
+              <div class="screen-stat">
+                <div class="screen-stat-val">30fps</div>
+                <div class="screen-stat-lbl">Frame Rate</div>
+              </div>
+              <div class="screen-stat">
+                <div class="screen-stat-val">42ms</div>
+                <div class="screen-stat-lbl">Latency</div>
+              </div>
+              <div class="screen-stat">
+                <div class="screen-stat-val">1080p</div>
+                <div class="screen-stat-lbl">Resolution</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="hero-float hero-float-1">
+          <span class="float-icon">✅</span>
+          <span>Zoom · Teams · Meet · Discord</span>
+        </div>
+        <div class="hero-float hero-float-2">
+          <span class="float-icon">📡</span>
+          <span>WiFi · No USB · No Cloud</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Stats ── -->
+<div class="wrap section-sm">
+  <div class="stats-row">
+    <div class="stat-box">
+      <div class="stat-val">&lt;50ms</div>
+      <div class="stat-lbl">Latency on 5GHz</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val">4K</div>
+      <div class="stat-lbl">Max Resolution</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val">60fps</div>
+      <div class="stat-lbl">Max Frame Rate</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val">0</div>
+      <div class="stat-lbl">Cloud Servers Used</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── How It Works ── -->
+<section class="section" id="how-it-works">
+  <div class="wrap">
+    <div class="section-label">Get Started</div>
+    <h2>How It Works</h2>
+    <p style="max-width:560px;margin-top:8px">Four simple steps and your phone is a professional webcam. No technical knowledge needed.</p>
+    <div class="flow" style="grid-template-columns:repeat(4,1fr)">
+      <div class="flow-step" style="border-radius:16px 0 0 16px">
+        <div class="flow-num">01</div>
+        <div class="flow-arrow">›</div>
+        <div style="font-size:2rem;margin-bottom:12px">💻</div>
+        <h3>Download Desktop App</h3>
+        <p style="font-size:.85rem;color:var(--text3);margin-top:8px;line-height:1.6">Download and install PhoneCam Connect on your Windows PC. Takes about 30 seconds.</p>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">02</div>
+        <div class="flow-arrow">›</div>
+        <div style="font-size:2rem;margin-bottom:12px">📱</div>
+        <h3>Install Phone App</h3>
+        <p style="font-size:.85rem;color:var(--text3);margin-top:8px;line-height:1.6">Install the PhoneCam app on your Android from the Play Store. Coming soon to iPhone. Also free.</p>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">03</div>
+        <div class="flow-arrow">›</div>
+        <div style="font-size:2rem;margin-bottom:12px">📶</div>
+        <h3>Same WiFi Network</h3>
+        <p style="font-size:.85rem;color:var(--text3);margin-top:8px;line-height:1.6">Make sure your laptop and phone are on the same WiFi. No internet needed — everything stays on your local network.</p>
+      </div>
+      <div class="flow-step" style="border-radius:0 16px 16px 0">
+        <div class="flow-num">04</div>
+        <div style="font-size:2rem;margin-bottom:12px">✅</div>
+        <h3>Scan QR — You're Live</h3>
+        <p style="font-size:.85rem;color:var(--text3);margin-top:8px;line-height:1.6">Open the desktop app — it shows a QR code. Open PhoneCam on your phone and tap Scan. Your phone is now a webcam.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Features ── -->
+<section class="section" id="features" style="background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+  <div class="wrap">
+    <div class="section-label">Capabilities</div>
+    <h2>Everything You Need</h2>
+    <p style="max-width:500px;margin-top:8px">Not just a stream. A complete virtual camera solution.</p>
+    <div class="features-grid">
+      <div class="feat">
+        <div class="feat-icon">🎥</div>
+        <h3>Native Windows Webcam</h3>
+        <p>"PhoneCam Connect" appears in every app's camera picker — Zoom, Teams, WhatsApp, Meet, Discord, OBS — without OBS as middleware.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">📱</div>
+        <h3>Multi-Device Support</h3>
+        <p>Connect multiple phones at once. Switch the active webcam source per-device from the dashboard. Each phone has independent quality settings.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">⚙️</div>
+        <h3>Quality Control</h3>
+        <p>Per-device: resolution (480p → 4K), FPS (15/24/30/60), and JPEG quality (40–100%). Changes sync instantly to phone and all UI elements.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">🔄</div>
+        <h3>Flip, Rotate, Mirror</h3>
+        <p>0°/90°/180°/270° rotation with smooth preview. Aspect ratio: Auto-detect, 16:9, 9:16, 4:3, 1:1, 21:9. Mirror mode for selfie style.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">📊</div>
+        <h3>Live Analytics</h3>
+        <p>Real-time FPS counter, latency, bitrate, dropped frames chart. See exactly how your stream is performing on the Analytics page.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">🔁</div>
+        <h3>Auto-Reconnect</h3>
+        <p>Heartbeat every 10s detects dead connections. On disconnect, auto-switches to next available phone. FFmpeg crashes auto-restart up to 3×.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">🔐</div>
+        <h3>Secure Architecture</h3>
+        <p>contextBridge IPC with channel whitelists. contextIsolation enabled. URL validation on external links. CSP headers enforced.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">🔦</div>
+        <h3>Camera Controls</h3>
+        <p>Toggle phone torch, flip front/back camera, adjust mic, toggle noise suppression — all from the desktop app without touching your phone.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">📡</div>
+        <h3>Always-On MJPEG</h3>
+        <p>Port 7781 serves a standard MJPEG stream. Add it to OBS as a Browser Source, open in VLC, or embed in any browser — zero setup.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Comparison ── -->
+<section class="section">
+  <div class="wrap">
+    <div class="section-label">Comparison</div>
+    <h2>PhoneCam vs Alternatives</h2>
+    <p style="max-width:540px;margin-top:8px">See how PhoneCam Connect stacks up across the features that actually matter.</p>
+    <div class="compare-wrap" style="margin-top:40px">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th style="min-width:180px">App</th>
+            <th>Free</th>
+            <th>QR Connect</th>
+            <th>Android</th>
+            <th>iPhone</th>
+            <th>Windows</th>
+            <th>Mac</th>
+            <th>Linux</th>
+            <th>4K</th>
+            <th>Local Only</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="highlight-col" style="font-weight:700;color:var(--text)">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span>📷</span>
+                <div>
+                  <div>PhoneCam Connect</div>
+                  <div style="font-size:.75rem;color:var(--accent);font-weight:600">⭐ Recommended</div>
+                </div>
+              </div>
+            </td>
+            <td class="highlight-col"><span class="yes">✓</span></td>
+            <td class="highlight-col"><span class="yes">✓</span></td>
+            <td class="highlight-col"><span class="yes">✓</span></td>
+            <td class="highlight-col"><span style="color:var(--orange);font-size:.8rem;font-weight:700">Soon</span></td>
+            <td class="highlight-col"><span class="yes">✓</span></td>
+            <td class="highlight-col"><span style="color:var(--orange);font-size:.8rem;font-weight:700">Soon</span></td>
+            <td class="highlight-col"><span style="color:var(--orange);font-size:.8rem;font-weight:700">Soon</span></td>
+            <td class="highlight-col"><span class="yes">✓</span></td>
+            <td class="highlight-col"><span class="yes">✓</span></td>
+          </tr>
+          <tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span>🎬</span><span>DroidCam</span>
+              </div>
+            </td>
+            <td><span class="yes">✓</span></td>
+            <td><span class="yes">✓</span></td>
+            <td><span class="yes">✓</span></td>
+            <td><span class="yes">✓</span></td>
+            <td><span class="yes">✓</span></td>
+            <td><span class="yes">✓</span></td>
+            <td><span class="yes">✓</span></td>
+            <td><span style="color:var(--orange);font-size:.9rem">~</span></td>
+            <td><span class="yes">✓</span></td>
+          </tr>
+          <tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span>🎥</span><span>EpocCam</span>
+              </div>
+            </td>
+            <td><span style="color:var(--orange);font-size:.85rem;font-weight:600">Watermark</span></td>
+            <td><span class="yes">✓</span></td>
+            <td><span class="yes">✓</span></td>
+            <td><span class="yes">✓</span></td>
+            <td><span class="yes">✓</span></td>
+            <td><span class="yes">✓</span></td>
+            <td><span class="no">✗</span></td>
+            <td><span class="yes">✓</span></td>
+            <td><span class="yes">✓</span></td>
+          </tr>
+          <tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span>🍎</span><span>Continuity Camera</span>
+              </div>
+            </td>
+            <td><span class="yes">✓</span></td>
+            <td><span class="no">✗</span></td>
+            <td><span class="no">✗</span></td>
+            <td><span class="yes">✓</span></td>
+            <td><span class="no">✗</span></td>
+            <td><span class="yes">✓</span></td>
+            <td><span class="no">✗</span></td>
+            <td><span class="yes">✓</span></td>
+            <td><span class="yes">✓</span></td>
+          </tr>
+          <tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span>🎛️</span><span>Camo</span>
+              </div>
+            </td>
+            <td><span style="color:var(--orange);font-size:.85rem;font-weight:600">Limited</span></td>
+            <td><span class="yes">✓</span></td>
+            <td><span style="color:var(--orange);font-size:.85rem;font-weight:600">Beta</span></td>
+            <td><span class="yes">✓</span></td>
+            <td><span class="yes">✓</span></td>
+            <td><span class="yes">✓</span></td>
+            <td><span class="no">✗</span></td>
+            <td><span class="yes">✓</span></td>
+            <td><span class="yes">✓</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ── Setup ── -->
+<section class="section" id="setup" style="background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+  <div class="wrap">
+    <div class="section-label">Get Started</div>
+    <h2>Up and Running in 2 Minutes</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>Download PhoneCam Connect</h3>
+        <p>Download the Windows desktop app. Run the installer — no configuration needed.</p>
+        <code>PhoneCam Connect Setup 1.0.0.exe</code>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>Install Android App</h3>
+        <p>Install PhoneCam from the Play Store. Make sure your phone is on the same WiFi network as your PC.</p>
+        <code>Search: "PhoneCam Connect" on Play Store</code>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>Scan QR Code</h3>
+        <p>Open the desktop app — it shows a QR code. Open PhoneCam on your phone → tap Scan QR. Connection is instant.</p>
+        <code>Or enter IP manually: ws://192.168.x.x:7779</code>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <h3>Select Camera in Your App</h3>
+        <p>Click Start Webcam in the dashboard. Open Zoom / Teams / Meet → camera settings → select <strong>PhoneCam Connect</strong>.</p>
+        <code>Requires native driver for direct app access →</code>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Native Driver ── -->
+<section class="section" id="driver">
+  <div class="wrap">
+    <div class="section-label">Native Driver</div>
+    <h2>No OBS. Just Select Your Camera.</h2>
+    <p style="max-width:560px;margin-top:8px">The native Windows DirectShow driver makes "PhoneCam Connect" appear in every camera picker — just like a real USB webcam.</p>
+    <div class="driver-card">
+      <div>
+        <div class="driver-badge">Optional — Recommended</div>
+        <h3 style="font-size:1.3rem;margin-bottom:10px">PhoneCam Native Driver</h3>
+        <p style="font-size:.9rem;margin-bottom:20px">Installs <code>PhoneCamFilter.dll</code> as a Windows DirectShow COM filter. One-time Administrator install, ~5 seconds. Works in every video app.</p>
+        <div class="driver-apps">
+          <div class="driver-app">Zoom ✅</div>
+          <div class="driver-app">WhatsApp ✅</div>
+          <div class="driver-app">Teams ✅</div>
+          <div class="driver-app">Google Meet ✅</div>
+          <div class="driver-app">OBS ✅</div>
+          <div class="driver-app">Discord ✅</div>
+          <div class="driver-app">Skype ✅</div>
+          <div class="driver-app">Any Windows App ✅</div>
+        </div>
+
+        <!-- Coming Soon Driver Button -->
+        <div style="margin-top:24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+          <span class="coming-soon-btn btn-lg">
+            🚧 Driver — Coming Soon
+          </span>
+        </div>
+        <p style="font-size:.75rem;color:var(--text3);margin-top:10px">Windows 10/11 64-bit · ~2MB · Administrator required (one time only) · In active development</p>
+      </div>
+      <div>
+        <div class="driver-steps">
+          <div class="driver-step">
+            <div class="driver-step-num">1</div>
+            <div class="driver-step-text">Download <strong>PhoneCamConnect_Driver_Setup.exe</strong> from this page once available</div>
+          </div>
+          <div class="driver-step">
+            <div class="driver-step-num">2</div>
+            <div class="driver-step-text"><strong>Right-click → Run as Administrator</strong>. Installation completes silently in ~5 seconds. No reboot required.</div>
+          </div>
+          <div class="driver-step">
+            <div class="driver-step-num">3</div>
+            <div class="driver-step-text">Open PhoneCam Connect desktop app → Setup Wizard → click <strong>Re-check</strong>. Shows <span style="color:var(--green)">Installed & Active</span>.</div>
+          </div>
+          <div class="driver-step">
+            <div class="driver-step-num">4</div>
+            <div class="driver-step-text">Open Zoom / Teams / Meet → camera settings → select <strong style="color:var(--accent)">"PhoneCam Connect"</strong> from the dropdown.</div>
+          </div>
+        </div>
+        <!-- notify badge -->
+        <div style="margin-top:20px;background:rgba(245,166,35,.06);border:1px solid rgba(245,166,35,.15);border-radius:12px;padding:14px 16px">
+          <p style="font-size:.8rem;color:var(--orange);font-weight:600;margin-bottom:4px">🔔 Get notified when driver launches</p>
+          <p style="font-size:.78rem;color:var(--text3)">Watch the <a href="https://github.com/sudo0xsajal/PhonecamConnect" target="_blank" style="color:var(--accent);text-decoration:underline">GitHub repo</a> for release updates and changelogs.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Tech Specs ── -->
+<section class="section" style="background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+  <div class="wrap">
+    <div class="section-label">Technical</div>
+    <h2>Built for Reliability</h2>
+    <div class="tech-grid">
+      <div class="tech-card">
+        <h3>📡 Network &amp; Ports</h3>
+        <ul class="tech-list">
+          <li><span class="lbl">WebSocket (phone frames)</span><span class="val">:7779</span></li>
+          <li><span class="lbl">HTTP discovery page</span><span class="val">:7780</span></li>
+          <li><span class="lbl">MJPEG stream</span><span class="val">:7781/stream</span></li>
+          <li><span class="lbl">Named pipe</span><span class="val">\\.\pipe\phonecam_video</span></li>
+          <li><span class="lbl">Transport</span><span class="val">Local WiFi only</span></li>
+        </ul>
+      </div>
+      <div class="tech-card">
+        <h3>🖥️ Desktop App</h3>
+        <ul class="tech-list">
+          <li><span class="lbl">Framework</span><span class="val">Electron 29</span></li>
+          <li><span class="lbl">Security</span><span class="val">contextBridge</span></li>
+          <li><span class="lbl">IPC</span><span class="val">Whitelisted channels</span></li>
+          <li><span class="lbl">Windows</span><span class="val">10 / 11 ✓</span></li>
+          <li><span class="lbl">Mac / Linux</span><span class="val">Coming Soon</span></li>
+        </ul>
+      </div>
+      <div class="tech-card">
+        <h3>📡 Wire Protocol</h3>
+        <ul class="tech-list">
+          <li><span class="lbl">Video frames</span><span class="val">JPEG over WebSocket</span></li>
+          <li><span class="lbl">Pipe frame header</span><span class="val">PCMF + uint32LE len</span></li>
+          <li><span class="lbl">Quality command</span><span class="val">JSON set_quality</span></li>
+          <li><span class="lbl">Backpressure</span><span class="val">2MB drop threshold</span></li>
+          <li><span class="lbl">Heartbeat</span><span class="val">10s ping/pong</span></li>
+        </ul>
+      </div>
+      <div class="tech-card">
+        <h3>🎥 Virtual Camera</h3>
+        <ul class="tech-list">
+          <li><span class="lbl">Native driver</span><span class="val">DirectShow COM</span></li>
+          <li><span class="lbl">CLSID</span><span class="val">{A1B2C3D4-E5F6...}</span></li>
+          <li><span class="lbl">Linux</span><span class="val">v4l2loopback (Soon)</span></li>
+          <li><span class="lbl">MJPEG fallback</span><span class="val">All platforms</span></li>
+          <li><span class="lbl">FFmpeg auto-restart</span><span class="val">3× retry, 2s delay</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Download ── -->
+<section class="download-section" id="download">
+  <div class="wrap">
+    <div class="section-label" style="justify-content:center">Download</div>
+    <h2>Start Streaming for Free</h2>
+    <p style="max-width:480px;margin:12px auto 0">No account. No subscription. No cloud. Download, install, scan QR, done.</p>
+
+    <!-- Desktop app card -->
+    <div class="download-card">
+      <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(27,111,235,.1);
+        color:var(--accent);border:1px solid rgba(27,111,235,.2);border-radius:20px;
+        padding:4px 14px;font-size:.75rem;font-weight:700;margin-bottom:16px;text-transform:uppercase;letter-spacing:.05em">
+        🖥️ Desktop App
+      </div>
+      <h3 style="font-size:1.15rem;margin-bottom:6px">PhoneCam Connect</h3>
+      <p style="font-size:.875rem;margin-bottom:8px">v1.0.0 · Windows Available Now · Mac &amp; Linux Coming Soon · Free forever</p>
+
+      <!-- Platform note -->
+      <div style="display:inline-flex;align-items:center;gap:6px;
+        background:rgba(22,199,132,.08);color:var(--green);
+        border:1px solid rgba(22,199,132,.2);border-radius:20px;
+        padding:3px 12px;font-size:.72rem;font-weight:700;margin-bottom:20px;
+        text-transform:uppercase;letter-spacing:.04em">
+        ✓ Windows Stable Release Available
+      </div>
+
+      <div class="download-os">
+        <!-- Windows — ACTIVE -->
+        <a href="https://github.com/sudo0xsajal/PhonecamConnect/releases/download/v1.0.0/PhoneCam.Connect.Setup.1.0.0.exe"
+           class="download-os-btn active-download"
+           id="winDownloadBtn"
+           onclick="triggerDownloadToast('Windows', 'PhoneCam Connect Setup 1.0.0.exe', '~85MB')">
+          <span class="os-icon">🪟</span>
+          <div>
+            <div style="font-weight:700">Windows</div>
+            <div style="font-size:.75rem;color:var(--text3)">Win 10/11 · 64-bit · ~85MB</div>
+          </div>
+        </a>
+
+        <!-- macOS — Coming Soon -->
+        <div class="download-os-btn platform-soon" title="macOS support coming soon">
+          <span class="os-soon-tag">Coming Soon</span>
+          <span class="os-icon">🍎</span>
+          <div>
+            <div style="font-weight:700">macOS</div>
+            <div style="font-size:.75rem">macOS 11+ · Intel &amp; Apple Silicon</div>
+          </div>
+        </div>
+
+        <!-- Linux — Coming Soon -->
+        <div class="download-os-btn platform-soon" title="Linux support coming soon">
+          <span class="os-soon-tag">Coming Soon</span>
+          <span class="os-icon">🐧</span>
+          <div>
+            <div style="font-weight:700">Linux</div>
+            <div style="font-size:.75rem">AppImage + .deb · Ubuntu/Debian</div>
+          </div>
+        </div>
+      </div>
+
+      <p class="download-note" style="margin-top:14px">
+        🔒 Direct download from GitHub Releases · No installer tracking · Open source (MIT)
+      </p>
+    </div>
+
+    <!-- Phone app card -->
+    <div class="download-card" style="margin-top:20px">
+      <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(245,166,35,.08);
+        color:var(--orange);border:1px solid rgba(245,166,35,.2);border-radius:20px;
+        padding:4px 14px;font-size:.75rem;font-weight:700;margin-bottom:16px;text-transform:uppercase;letter-spacing:.05em">
+        📱 Phone App · Coming to Stores Soon
+      </div>
+      <h3 style="font-size:1.15rem;margin-bottom:6px">PhoneCam — Camera App</h3>
+      <p style="font-size:.875rem;margin-bottom:8px">Required on your phone · Android &amp; iPhone · Free</p>
+
+      <div style="display:inline-flex;align-items:center;gap:6px;
+        background:rgba(245,166,35,.08);color:var(--orange);
+        border:1px solid rgba(245,166,35,.15);border-radius:20px;
+        padding:3px 12px;font-size:.72rem;font-weight:700;margin-bottom:20px;
+        text-transform:uppercase;letter-spacing:.04em">
+        🚧 Store listings under review
+      </div>
+
+      <div class="download-os" style="flex-direction:column;align-items:stretch;gap:12px">
+
+        <!-- Google Play row: Coming Soon + Direct APK download side by side -->
+        <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+          <!-- Google Play — Coming Soon -->
+          <div class="store-btn-soon" title="Android app coming soon to Google Play" style="flex:1;min-width:180px;max-width:260px">
+            <span class="soon-label">Coming Soon</span>
+            <span class="os-icon">▶</span>
+            <div>
+              <div style="font-weight:700;color:var(--text2)">Google Play</div>
+              <div style="font-size:.75rem;color:var(--text3)">Android 8.0+ · Free</div>
+            </div>
+          </div>
+
+          <!-- Direct APK Download — Active -->
+          <a href="https://github.com/sudo0xsajal/PhonecamConnect/releases/download/v1.0.0/PhoneCam-Connect.apk"
+             class="download-os-btn active-download"
+             style="flex:1;min-width:180px;max-width:260px;border-color:rgba(22,199,132,.35);background:rgba(22,199,132,.06);position:relative"
+             onclick="triggerDownloadToast('Android', 'PhoneCam-Connect.apk', '~28MB')">
+            <div style="position:absolute;top:-8px;right:-2px;
+              background:rgba(22,199,132,.15);border:1px solid rgba(22,199,132,.3);
+              color:var(--green);font-size:.6rem;font-weight:800;
+              padding:1px 7px;border-radius:10px;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">
+              Direct APK
+            </div>
+            <span class="os-icon" style="font-size:1.4rem">🤖</span>
+            <div>
+              <div style="font-weight:700;color:var(--green)">Download Android</div>
+              <div style="font-size:.75rem;color:var(--text3)">APK · Android 8.0+ · ~28MB</div>
+            </div>
+          </a>
+        </div>
+
+        <!-- Sideload notice -->
+        <div style="display:flex;align-items:flex-start;gap:8px;
+          background:rgba(22,199,132,.04);border:1px solid rgba(22,199,132,.12);
+          border-radius:10px;padding:10px 14px;text-align:left">
+          <span style="font-size:1rem;flex-shrink:0;margin-top:1px">ℹ️</span>
+          <p style="font-size:.75rem;color:var(--text3);line-height:1.5;margin:0">
+            <strong style="color:var(--text2)">Sideloading the APK?</strong> On your Android, go to
+            <strong style="color:var(--text2)">Settings → Apps → Install unknown apps</strong>
+            and allow your browser or file manager. Then open the downloaded APK to install.
+          </p>
+        </div>
+
+        <!-- App Store — Coming Soon -->
+        <div style="display:flex;justify-content:center">
+          <div class="store-btn-soon" title="iPhone app coming soon to App Store" style="min-width:200px">
+            <span class="soon-label">Coming Soon</span>
+            <span class="os-icon">🍎</span>
+            <div>
+              <div style="font-weight:700;color:var(--text2)">App Store</div>
+              <div style="font-size:.75rem;color:var(--text3)">iPhone iOS 14+ · Free</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="download-note" style="margin-top:16px">
+        ⭐ Star the <a href="https://github.com/sudo0xsajal/PhonecamConnect" target="_blank" style="color:var(--accent)">GitHub repo</a> to get notified when the app goes live on both stores
+      </div>
+
+      <div style="margin-top:16px;display:inline-flex;align-items:center;gap:6px;
+        background:rgba(27,111,235,.06);border:1px solid rgba(27,111,235,.15);
+        border-radius:10px;padding:8px 14px;font-size:.78rem;color:var(--text3)">
+        Also available for Windows: <a href="#driver" style="color:var(--accent);font-weight:600;margin-left:4px">Native Driver</a>
+        — makes "PhoneCam Connect" appear directly in Zoom, Teams, Meet
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Footer ── -->
+<footer>
+  <div class="wrap">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="nav-logo" style="margin-bottom:10px">
+          <div class="nav-logo-icon">📱</div>
+          PhoneCam Connect
+        </div>
+        <p>Turn your Android into a professional webcam. Zero cloud, zero latency, 100% local WiFi.</p>
+        <p style="margin-top:8px;font-size:.8rem">MIT License · Open Source</p>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <ul>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#how-it-works">How It Works</a></li>
+          <li><a href="#driver">Native Driver</a></li>
+          <li><a href="#download">Download</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Developers</h4>
+        <ul>
+          <li><a href="https://github.com/sudo0xsajal/PhonecamConnect" target="_blank">GitHub</a></li>
+          <li><a href="https://github.com/sudo0xsajal/PhonecamConnect/blob/main/README.md" target="_blank">Documentation</a></li>
+          <li><a href="https://github.com/sudo0xsajal/PhonecamConnect/issues" target="_blank">Report a Bug</a></li>
+          <li><a href="https://github.com/sudo0xsajal/PhonecamConnect/blob/main/LICENSE" target="_blank">License (MIT)</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Support</h4>
+        <ul>
+          <li><a href="mailto:sajalneverstop@gmail.com">sajalneverstop@gmail.com</a></li>
+          <li><a href="#setup">Setup Guide</a></li>
+          <li><a href="https://github.com/sudo0xsajal/PhonecamConnect/issues" target="_blank">Troubleshooting</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 PhoneCam Connect · MIT License</p>
+      <p>Made for developers who want a better webcam without buying one.</p>
+    </div>
+  </div>
+</footer>
+
+<!-- ── Download Toast ── -->
+<div class="download-toast" id="downloadToast">
+  <div class="toast-icon">⬇️</div>
+  <div style="flex:1">
+    <div class="toast-title" id="toastTitle">Starting download…</div>
+    <div class="toast-sub" id="toastSub">PhoneCam Connect</div>
+    <div class="toast-progress">
+      <div class="toast-progress-bar" id="toastBar"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── QR Pixel Pattern ── */
+(function(){
+  const pattern = [
+    1,1,1,1,1,1,1,0,1,0,1,
+    1,0,0,0,0,0,1,0,0,1,0,
+    1,0,1,1,1,0,1,0,1,0,1,
+    1,0,1,1,1,0,1,0,0,1,1,
+    1,0,1,1,1,0,1,0,1,1,0,
+    1,0,0,0,0,0,1,0,1,0,1,
+    1,1,1,1,1,1,1,0,0,0,1,
+    0,0,0,0,0,0,0,0,1,1,0,
+    1,1,0,1,1,0,1,1,1,0,1,
+    0,1,0,0,1,0,0,0,1,1,0,
+    1,0,1,1,0,1,1,0,1,0,1
+  ];
+  const grid = document.getElementById('qrPixels');
+  if(!grid) return;
+  pattern.forEach(v=>{
+    const px = document.createElement('div');
+    px.className='qr-px';
+    px.style.background = v
+      ? `rgba(27,111,235,${Math.random()*.3+.7})`
+      : 'transparent';
+    if(v) px.style.boxShadow='0 0 2px rgba(27,111,235,.4)';
+    grid.appendChild(px);
+  });
+
+  /* Animate pixels: random blink for scanned effect */
+  const pixels = grid.querySelectorAll('.qr-px');
+  let phase = 0;
+  function animateQR(){
+    phase += .04;
+    pixels.forEach((px,i)=>{
+      if(px.style.background==='transparent') return;
+      const row = Math.floor(i/11);
+      const brightness = .5 + .5*Math.sin(phase + row*.4);
+      px.style.opacity = brightness;
+    });
+    requestAnimationFrame(animateQR);
+  }
+  animateQR();
+})();
+
+/* ── Download Toast ── */
+function triggerDownloadToast(os, filename, size){
+  const toast  = document.getElementById('downloadToast');
+  const title  = document.getElementById('toastTitle');
+  const sub    = document.getElementById('toastSub');
+  const bar    = document.getElementById('toastBar');
+
+  title.textContent = `Downloading for ${os}…`;
+  sub.textContent   = `${filename} · ${size}`;
+  bar.style.width   = '0%';
+  bar.style.transition = 'none';
+
+  toast.classList.add('show');
+
+  // Animate progress bar
+  let progress = 0;
+  const speeds = [30,18,12,8,6,4,3,2,1.5,1];
+  let step = 0;
+  const interval = setInterval(()=>{
+    const spd = speeds[Math.min(step++, speeds.length-1)];
+    progress = Math.min(progress + spd, 97);
+    bar.style.transition = 'width .15s linear';
+    bar.style.width = progress + '%';
+    if(progress >= 97){
+      clearInterval(interval);
+      setTimeout(()=>{
+        bar.style.width='100%';
+        title.textContent='Download started ✓';
+        sub.textContent='Check your Downloads folder';
+        setTimeout(()=>toast.classList.remove('show'), 2800);
+      }, 400);
+    }
+  }, 200);
+}
+
+/* ── Smooth active nav highlight on scroll ── */
+const sections = document.querySelectorAll('section[id]');
+const navLinks  = document.querySelectorAll('.nav-links a[href^="#"]');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => {
+    if (window.scrollY >= s.offsetTop - 80) current = s.id;
+  });
+  navLinks.forEach(a => {
+    a.style.color = a.getAttribute('href') === '#' + current
+      ? 'var(--text)'
+      : '';
+  });
+}, { passive: true });
+
+/* ── Animate stat numbers on scroll into view ── */
+const statVals = document.querySelectorAll('.stat-val');
+const statObserver = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if(e.isIntersecting){
+      e.target.style.animation = 'none';
+      e.target.offsetHeight;
+      e.target.style.animation = '';
+    }
+  });
+}, { threshold: .5 });
+statVals.forEach(s => statObserver.observe(s));
+</script>
+</body>
+</html>

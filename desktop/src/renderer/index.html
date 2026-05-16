@@ -1,0 +1,4343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src ws://localhost:7779 ws://127.0.0.1:7779 http://localhost:7780 http://127.0.0.1:7780 http://localhost:7781 http://127.0.0.1:7781; media-src 'self' blob:; font-src 'self' data:;"/>
+<title>PhoneCam Connect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+/* ─── CSS Variables ─────────────────────────────────────────────────────── */
+:root {
+  --bg:        #0F0E0C;
+  --bg2:       #161512;
+  --bg3:       #1E1C18;
+  --sidebar:   #131210;
+  --border:    #2A2721;
+  --border2:   #342F28;
+  --text:      #F0EDE6;
+  --text2:     #9A9080;
+  --text3:     #5A5248;
+  --accent:    #1B6FEB;
+  --accent2:   #1558C0;
+  --accent-g:  #16C784;
+  --accent-r:  #FF4757;
+  --accent-y:  #FFA502;
+  --accent-p:  #A855F7;
+  --radius:    10px;
+  --radius-lg: 16px;
+  --font:      'Plus Jakarta Sans', system-ui, sans-serif;
+  --mono:      'JetBrains Mono', monospace;
+  --shadow:    0 4px 24px rgba(0,0,0,.5);
+  --transition: 180ms cubic-bezier(.4,0,.2,1);
+}
+
+/* ─── Reset ─────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; background: var(--bg); }
+body { font-family: var(--font); color: var(--text); font-size: 14px; line-height: 1.5; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+input, select, textarea { font-family: inherit; }
+a { color: inherit; text-decoration: none; }
+img { display: block; }
+svg { display: block; flex-shrink: 0; }
+
+/* ─── Scrollbar ─────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+/* ─── App Shell Grid ─────────────────────────────────────────────────────── */
+#app {
+  display: grid;
+  grid-template-rows: 40px 1fr;
+  grid-template-columns: 220px 1fr;
+  grid-template-areas:
+    "titlebar titlebar"
+    "sidebar  content";
+  width: 100vw;
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+}
+#titlebar { grid-area: titlebar; }
+#sidebar  { grid-area: sidebar; overflow: hidden; display: flex; flex-direction: column; height: 100%; min-height: 0; }
+#content  { grid-area: content; overflow-y: auto; overflow-x: hidden; height: 100%; min-height: 0; isolation: isolate; scrollbar-gutter: stable; }
+
+/* ─── Titlebar ──────────────────────────────────────────────────────────── */
+#titlebar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  background: var(--sidebar);
+  border-bottom: 1px solid var(--border);
+  -webkit-app-region: drag;
+  user-select: none;
+  padding: 0 12px;
+  gap: 12px;
+}
+.tb-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  -webkit-app-region: no-drag;
+}
+.tb-logo-icon {
+  width: 20px; height: 20px;
+  background: var(--accent);
+  border-radius: 5px;
+  display: flex; align-items: center; justify-content: center;
+}
+.tb-logo-text { font-weight: 700; font-size: 13px; letter-spacing: -.01em; }
+.tb-drag { flex: 1; height: 100%; }
+.tb-status {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--text3);
+  -webkit-app-region: no-drag;
+}
+.tb-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-g); }
+.tb-dot.inactive { background: var(--text3); }
+.tb-controls {
+  display: flex; align-items: center; gap: 4px;
+  -webkit-app-region: no-drag;
+}
+.tb-btn {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text2);
+  transition: background var(--transition), color var(--transition);
+}
+.tb-btn:hover { background: var(--border); color: var(--text); }
+.tb-btn.close:hover { background: var(--accent-r); color: #fff; }
+
+/* ─── Sidebar ───────────────────────────────────────────────────────────── */
+/* Sidebar — uses grid-area:sidebar, dimensions from #app grid */
+#sidebar {
+  background: var(--sidebar);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+/* Scrollable nav section */
+#sidebar-nav {
+  flex: 1 1 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  padding-bottom: 4px;
+}
+.nav-section { padding: 16px 12px 4px; }
+.nav-label { font-size: 10px; font-weight: 600; color: var(--text3); letter-spacing: .08em; text-transform: uppercase; padding: 0 8px; margin-bottom: 4px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px;
+  border-radius: var(--radius);
+  color: var(--text2);
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+  margin-bottom: 1px;
+  position: relative;
+}
+.nav-item:hover { background: var(--bg3); color: var(--text); }
+.nav-item.active { background: var(--accent)18; color: var(--text); }
+.nav-item.active::before {
+  content: '';
+  position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+  width: 3px; height: 60%; border-radius: 0 2px 2px 0;
+  background: var(--accent);
+}
+.nav-item .nav-icon { width: 16px; height: 16px; opacity: .7; }
+.nav-item.active .nav-icon { opacity: 1; }
+.nav-badge {
+  margin-left: auto;
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 20px;
+  min-width: 18px;
+  text-align: center;
+  font-family: var(--mono);
+}
+.nav-badge.green { background: var(--accent-g); }
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 12px;
+  border-top: 1px solid var(--border);
+}
+.sidebar-device-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sdc-icon {
+  width: 32px; height: 32px;
+  background: var(--accent)22;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.sdc-text { flex: 1; min-width: 0; }
+.sdc-name { font-size: 12.5px; font-weight: 600; }
+.sdc-sub { font-size: 11px; color: var(--text2); }
+.sdc-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent-g); flex-shrink: 0; }
+.sdc-dot.off { background: var(--text3); }
+
+/* ─── Main Content + Page System ───────────────────────────────────────── */
+/*
+ * ARCHITECTURE:
+ * #app is a 2×2 grid: titlebar spans both cols on row 1,
+ * sidebar is col 1 row 2, #content is col 2 row 2.
+ *
+ * #content is a scroll container. Inside it, only ONE .page is ever
+ * display:block at a time. All others are display:none — fully removed
+ * from layout flow, zero contribution to size or paint.
+ *
+ * navigate() is the ONLY function that touches page visibility.
+ * No inline display styles are ever set on .page elements.
+ */
+#content {
+  grid-column: 2;
+  grid-row: 2;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* Hard height: fills grid cell exactly */
+  height: 100%;
+  min-height: 0;
+  /* New stacking context — child z-indexes isolated */
+  isolation: isolate;
+  /* Prevent layout shift from scrollbar appearing */
+  scrollbar-gutter: stable;
+}
+
+/* Every page: invisible and OUT of layout by default */
+.page {
+  display: none !important;
+  /* !important ensures no inline style or JS override can show a hidden page */
+}
+
+/* The one active page: shown, padded, full width */
+.page.active {
+  display: block !important;
+  padding: 28px 32px 48px;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 100%;
+  animation: page-in 0.15s ease both;
+}
+
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ─── Page Header ───────────────────────────────────────────────────────── */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+  gap: 12px;
+}
+.page-title { font-size: 22px; font-weight: 800; letter-spacing: -.03em; line-height: 1.2; }
+.page-sub { font-size: 13.5px; color: var(--text2); margin-top: 3px; }
+
+/* ─── Cards ─────────────────────────────────────────────────────────────── */
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+}
+.card-title { font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 14px; text-transform: uppercase; letter-spacing: .05em; }
+
+/* ─── Grid ───────────────────────────────────────────────────────────────── */
+/* Responsive grids — collapse on small windows */
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+
+/* ─── Stat Cards ─────────────────────────────────────────────────────────── */
+.stat-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  position: relative;
+  overflow: hidden;
+}
+.stat-card::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at top right, var(--accent-color, var(--accent))08, transparent 60%);
+  pointer-events: none;
+}
+.stat-label { font-size: 12px; color: var(--text2); font-weight: 500; margin-bottom: 8px; }
+.stat-value { font-size: 28px; font-weight: 800; letter-spacing: -.04em; font-family: var(--mono); }
+.stat-delta { font-size: 12px; margin-top: 6px; }
+.stat-delta.up { color: var(--accent-g); }
+.stat-delta.neutral { color: var(--text2); }
+.stat-icon {
+  position: absolute; top: 16px; right: 16px;
+  width: 32px; height: 32px;
+  background: var(--accent-color, var(--accent))18;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--accent-color, var(--accent));
+}
+
+/* ─── Buttons ────────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  font-size: 13.5px;
+  font-weight: 600;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-danger { background: rgba(255,77,77,.15); color: #ff6b6b; border: 1px solid rgba(255,77,77,.3); }
+.btn-danger:hover { background: rgba(255,77,77,.25); color: #ff4d4d; }
+.btn-primary:hover { background: var(--accent2); }
+.btn-secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border2); }
+.btn-secondary:hover { background: var(--border); }
+.btn-danger { background: var(--accent-r)18; color: var(--accent-r); border: 1px solid var(--accent-r)30; }
+.btn-danger:hover { background: var(--accent-r)30; }
+.btn-success { background: var(--accent-g)18; color: var(--accent-g); border: 1px solid var(--accent-g)30; }
+.btn-success:hover { background: var(--accent-g)30; }
+.btn-lg { padding: 11px 22px; font-size: 14.5px; border-radius: 12px; }
+.btn-sm { padding: 5px 11px; font-size: 12px; border-radius: 7px; }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+
+/* ─── QR Connect Box ─────────────────────────────────────────────────────── */
+.qr-connect-box {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  display: flex;
+  gap: 28px;
+  align-items: center;
+}
+.qr-canvas-wrap {
+  flex-shrink: 0;
+  width: 160px; height: 160px;
+  background: var(--bg3);
+  border-radius: var(--radius);
+  border: 1px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.qr-canvas-wrap img { width: 140px; height: 140px; }
+.qr-loading { color: var(--text3); font-size: 12px; }
+.qr-info h3 { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+.qr-info p { color: var(--text2); font-size: 13.5px; margin-bottom: 14px; }
+.qr-url-pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+
+/* ─── Phone Connected Card ───────────────────────────────────────────────── */
+.phone-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: border-color var(--transition);
+}
+.phone-card:hover { border-color: var(--border2); }
+.phone-card.live { border-color: var(--accent-g)50; }
+.phone-avatar {
+  width: 44px; height: 44px;
+  background: var(--accent)18;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-size: 22px;
+}
+.phone-info { flex: 1; min-width: 0; }
+.phone-name { font-weight: 700; font-size: 14.5px; margin-bottom: 3px; }
+.phone-meta { font-size: 12px; color: var(--text2); display: flex; gap: 10px; }
+.phone-meta-item { display: flex; align-items: center; gap: 4px; }
+.phone-actions { display: flex; gap: 8px; }
+.live-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--accent-g)18;
+  color: var(--accent-g);
+  font-size: 11px; font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 20px;
+  letter-spacing: .03em;
+}
+.live-badge::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent-g);
+  animation: pulse-g 1.5s infinite;
+}
+@keyframes pulse-g {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .5; transform: scale(.8); }
+}
+
+/* ─── Preview Canvas ─────────────────────────────────────────────────────── */
+.preview-wrap {
+  background: #000;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  position: relative;
+  border: 1px solid var(--border);
+  width: 100%;
+  /* aspect-ratio set dynamically per container */
+  aspect-ratio: 16/9;
+  /* no transition — aspect ratio must update instantly with each frame */
+}
+/* Preview canvas — fills container. Pixel dims set by JS. */
+.preview-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: none; /* hidden until first frame arrives */
+}
+/* Device mini canvas — same, hidden until frame arrives */
+.device-mini-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: none;  /* shown by JS once frames arrive */
+}
+.preview-overlay {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 10px;
+  color: var(--text3);
+  font-size: 13px;
+}
+.preview-overlay .ico { font-size: 36px; opacity: .3; }
+.preview-hud {
+  position: absolute;
+  top: 12px; left: 12px;
+  display: flex; gap: 8px;
+}
+.preview-hud-pill {
+  background: rgba(0,0,0,.7);
+  color: #fff;
+  font-size: 11px;
+  font-family: var(--mono);
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: flex; align-items: center; gap: 5px;
+  backdrop-filter: blur(8px);
+}
+.rec-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent-r);
+  animation: pulse-g 1s infinite;
+}
+
+/* ─── Device Card Grid — responsive ────────────────────────────────────── */
+.device-mgmt-card {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.device-mgmt-card:hover {
+  box-shadow: 0 0 0 1px var(--accent);
+}
+.device-preview-wrap {
+  position: relative;
+  background: #000;
+  overflow: hidden;
+  /* aspect-ratio set by JS from real frame dims */
+  aspect-ratio: 4/3;
+  cursor: pointer;
+  flex-shrink: 0;
+  /* no transition on aspect-ratio */
+}
+.device-preview-wrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 60%, rgba(0,0,0,.6));
+  pointer-events: none;
+}
+
+/* ─── Preview page layout ───────────────────────────────────────────────── */
+/* Note: #page-preview gets display:block from .page.active */
+/* #main-preview sizing controlled by responsive CSS block below */
+
+/* ─── Rotation button group ─────────────────────────────────────────────── */
+.rot-group {
+  display: flex;
+  gap: 2px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 3px;
+  align-items: center;
+}
+.rot-btn {
+  width: 30px;
+  height: 26px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  transition: background 0.15s, color 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.rot-btn.active {
+  background: var(--accent);
+  color: #fff;
+}
+.rot-btn:not(.active):hover {
+  background: var(--bg3);
+  color: var(--text);
+}
+
+/* ─── HUD pills — sharper at production scale ───────────────────────────── */
+.preview-hud-pill {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  padding: 3px 9px;
+}
+
+/* toast CSS is defined below */
+
+/* ─── Page transition animation ─────────────────────────────────────────── */
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ─── Settings Tabs ─────────────────────────────────────────────────────── */
+.settings-layout { display: grid; grid-template-columns: 180px 1fr; gap: 20px; }
+.settings-nav-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 9px 12px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text2);
+  transition: all var(--transition);
+  margin-bottom: 2px;
+}
+.settings-nav-item:hover { background: var(--bg3); color: var(--text); }
+.settings-nav-item.active { background: var(--accent)18; color: var(--text); }
+.settings-panel { display: none; }
+.settings-panel.active { display: block; }
+.settings-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+.settings-row:last-child { border-bottom: none; }
+.settings-row-label { font-size: 14px; font-weight: 500; }
+.settings-row-sub { font-size: 12.5px; color: var(--text2); margin-top: 2px; }
+
+/* ─── Toggle Switch ─────────────────────────────────────────────────────── */
+.toggle { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+.toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+.toggle-track {
+  position: absolute; inset: 0;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 11px;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+.toggle input:checked + .toggle-track { background: var(--accent); border-color: var(--accent); }
+.toggle-thumb {
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 16px; height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform var(--transition);
+  pointer-events: none;
+}
+.toggle input:checked ~ .toggle-thumb { transform: translateX(18px); }
+
+/* ─── Select ─────────────────────────────────────────────────────────────── */
+.select-field {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 13.5px;
+  font-family: var(--font);
+  padding: 7px 12px;
+  padding-right: 28px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239A9080' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  cursor: pointer;
+  transition: border-color var(--transition);
+  outline: none;
+}
+.select-field:focus { border-color: var(--accent); }
+
+/* ─── Input ──────────────────────────────────────────────────────────────── */
+.input-field {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 13.5px;
+  font-family: var(--font);
+  padding: 8px 12px;
+  width: 100%;
+  outline: none;
+  transition: border-color var(--transition);
+}
+.input-field:focus { border-color: var(--accent); }
+.input-field::placeholder { color: var(--text3); }
+
+/* ─── Toast ──────────────────────────────────────────────────────────────── */
+#toast-container {
+  position: fixed;
+  bottom: 20px; right: 20px;
+  display: flex; flex-direction: column; gap: 8px;
+  z-index: 9999;
+  pointer-events: none;
+}
+.toast {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  display: flex; align-items: center; gap: 10px;
+  font-size: 13px;
+  box-shadow: var(--shadow);
+  animation: toast-in .2s ease;
+  max-width: 320px;
+  pointer-events: all;
+}
+.toast.success { border-color: var(--accent-g)50; }
+.toast.error { border-color: var(--accent-r)50; }
+.toast.info { border-color: var(--accent)50; }
+.toast-icon { font-size: 16px; flex-shrink: 0; }
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px) scale(.96); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ─── Loading Skeleton ───────────────────────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(90deg, var(--bg3) 25%, var(--border) 50%, var(--bg3) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 6px;
+}
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+/* ─── Empty State ────────────────────────────────────────────────────────── */
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  gap: 10px;
+}
+.empty-state .empty-icon { font-size: 40px; opacity: .25; margin-bottom: 6px; }
+.empty-state h3 { font-size: 16px; font-weight: 700; }
+.empty-state p { color: var(--text2); font-size: 13.5px; max-width: 280px; }
+
+/* ─── Latency Chart ─────────────────────────────────────────────────────── */
+.sparkline {
+  width: 100%; height: 48px;
+  display: block;
+}
+
+/* ─── Onboarding Overlay ─────────────────────────────────────────────────── */
+#onboarding {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.85);
+  backdrop-filter: blur(6px);
+  z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+}
+.onboarding-card {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  width: 520px;
+  padding: 36px;
+  box-shadow: 0 32px 64px rgba(0,0,0,.6);
+}
+.ob-steps {
+  display: flex; gap: 6px; margin-bottom: 28px;
+}
+.ob-step {
+  height: 3px; border-radius: 2px;
+  background: var(--border2);
+  flex: 1;
+  transition: background var(--transition);
+}
+.ob-step.done { background: var(--accent); }
+.ob-content { display: none; }
+.ob-content.active { display: block; }
+.ob-icon { font-size: 42px; margin-bottom: 16px; }
+.ob-title { font-size: 22px; font-weight: 800; letter-spacing: -.03em; margin-bottom: 8px; }
+.ob-desc { color: var(--text2); font-size: 14px; line-height: 1.7; margin-bottom: 24px; }
+.ob-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+/* ─── OBS Integration card tabs ─────────────────────────────────────────── */
+.obs-tab {
+  padding: 6px 14px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text3);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+}
+.obs-tab:hover  { background: var(--bg3); color: var(--text2); }
+.obs-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.obs-tab-content        { display: none; }
+.obs-tab-content.active { display: block; }
+
+/* ─── Responsive breakpoints ─────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   PRODUCTION RESPONSIVE SYSTEM — scales from 800px to 4K
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Universal box model ─────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+.page * { max-width: 100%; box-sizing: border-box; }
+.page canvas, .page svg { max-width: none; }
+
+/* ── Overflow guards ─────────────────────────────────────────────────────── */
+.stat-card   { min-width: 0; overflow: hidden; }
+.stat-value  { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card        { min-width: 0; overflow: hidden; }
+.sdc-name, .sdc-sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.page-title  { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── Canvas rendering — production correct ───────────────────────────────── */
+/* IMPORTANT: canvas does NOT support object-fit.                             */
+/* Correct approach: set canvas.width/height = frame pixel dims,             */
+/* set wrapper aspect-ratio = frame dims, let CSS scale the wrapper.         */
+/* The canvas fills the wrapper via absolute positioning.                    */
+.preview-canvas {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  /* No object-fit — handled by wrapper aspect-ratio + canvas pixel dims */
+  image-rendering: auto;
+}
+.device-mini-canvas {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: auto;
+}
+
+/* ── Wrapper: drives aspect ratio from JS ─────────────────────────────────── */
+#main-preview {
+  width: 100%;
+  /* no transition on aspect-ratio */
+  /* aspect-ratio set by JS to exact frame dimensions every frame */
+}
+.device-preview-wrap {
+  position: relative;
+  background: #000;
+  overflow: hidden;
+  aspect-ratio: 16/9; /* default; overridden by JS */
+  cursor: pointer;
+  border-radius: 8px;
+  /* no transition on aspect-ratio */
+}
+.device-preview-wrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 60%, rgba(0,0,0,.55));
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── Performance: compositor hint ────────────────────────────────────────── */
+#main-preview, .device-preview-wrap, .preview-wrap {
+  will-change: contents;
+  contain: layout style paint;
+  isolation: isolate;
+}
+
+/* ── 1280px+ (large desktop) ─────────────────────────────────────────────── */
+@media (min-width: 1280px) {
+  #sidebar { width: 230px; }
+  .page { padding: 28px 32px 48px; }
+}
+
+/* ── 1024–1279px (standard desktop) ─────────────────────────────────────── */
+@media (max-width: 1279px) and (min-width: 1025px) {
+  #sidebar { width: 210px; }
+  .page { padding: 24px 26px 40px; }
+}
+
+/* ── 900–1024px (small laptop) ──────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  #sidebar { width: 200px; }
+  .page { padding: 20px 22px 36px; }
+  .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ── 768–900px (tablet landscape) ───────────────────────────────────────── */
+@media (max-width: 900px) {
+  .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .page-header { flex-wrap: wrap; gap: 10px; }
+}
+
+/* ── Below 800px (compact / tablet portrait) ────────────────────────────── */
+@media (max-width: 800px) {
+  #app {
+    grid-template-columns: 180px 1fr;
+  }
+  #sidebar { width: 180px; }
+  .sdc-name { font-size: 11px; }
+  .nav-item span { font-size: 12px; }
+  .page { padding: 16px 16px 32px; }
+  .page-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .page-header > div:last-child { width: 100%; display: flex; flex-wrap: wrap; gap: 8px; }
+  .grid-4, .grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .settings-layout { grid-template-columns: 1fr; }
+}
+
+/* ── Below 680px (small tablet / large phone) ───────────────────────────── */
+@media (max-width: 680px) {
+  #app {
+    grid-template-columns: 1fr;
+    grid-template-rows: 40px 44px 1fr;
+    grid-template-areas:
+      "titlebar"
+      "sidebar"
+      "content";
+  }
+  #sidebar {
+    width: 100%;
+    height: 44px;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0 8px;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-section-label { display: none; }
+  .nav-item { padding: 8px 10px; white-space: nowrap; }
+  .sidebar-bottom { display: none; }
+  .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; }
+  .page { padding: 14px 12px 28px; }
+}
+
+/* ── Settings responsive ─────────────────────────────────────────────────── */
+@media (max-width: 750px) {
+  .settings-layout { grid-template-columns: 1fr; }
+}
+
+/* ── Device card grid responsive ────────────────────────────────────────── */
+#devices-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 680px) {
+  #devices-list { grid-template-columns: 1fr; }
+}
+
+/* ── Preview page responsive toolbar ────────────────────────────────────── */
+.preview-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+@media (max-width: 860px) {
+  .preview-toolbar { gap: 6px; }
+  .rot-group { flex-shrink: 0; }
+}
+
+/* ── Smooth transitions for all state changes ───────────────────────────── */
+.btn, .card, .sidebar-device-card, .nav-item {
+  transition: background 0.15s ease, color 0.15s ease,
+              border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* ── ACTIVE WEBCAM badge pulse animation ─────────────────────────────────── */
+@keyframes pulse-g {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+@keyframes pulse-b {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+/* ── Error toast ─────────────────────────────────────────────────────────── */
+#error-toast {
+  position: fixed;
+  bottom: 16px; right: 16px;
+  background: var(--accent-r);
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.2s, transform 0.2s;
+  max-width: 360px;
+}
+#error-toast.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+</style>
+</head>
+<body>
+<div id="error-toast"></div>
+<div id="app">
+
+  <!-- ── Titlebar ───────────────────────────────────────────────────────── -->
+  <div id="titlebar">
+    <div class="tb-logo">
+      <div class="tb-logo-icon">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <rect x="1" y="2" width="7" height="8" rx="1.5" stroke="#fff" stroke-width="1.2"/>
+          <path d="M8 5l3-2v6l-3-2V5z" fill="#fff"/>
+        </svg>
+      </div>
+      <span class="tb-logo-text">PhoneCam Connect</span>
+    </div>
+    <div class="tb-drag"></div>
+    <div class="tb-status">
+      <div class="tb-dot" id="tb-dot"></div>
+      <span id="tb-status-text">Waiting for connection</span>
+    </div>
+    <div class="tb-controls">
+      <button class="tb-btn" onclick="window.phonecam?.minimize()" title="Minimize">
+        <svg width="10" height="2" viewBox="0 0 10 2"><rect width="10" height="2" rx="1" fill="currentColor"/></svg>
+      </button>
+      <button class="tb-btn" onclick="window.phonecam?.maximize()" title="Maximize">
+        <svg width="10" height="10" viewBox="0 0 10 10"><rect x="1" y="1" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+      </button>
+      <button class="tb-btn close" onclick="window.phonecam?.close()" title="Close">
+        <svg width="10" height="10" viewBox="0 0 10 10"><path d="M1 1l8 8M9 1l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Sidebar ────────────────────────────────────────────────────────── -->
+  <nav id="sidebar">
+    <!-- Scrollable nav area -->
+    <div id="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-label">Main</div>
+      <div class="nav-item active" data-page="dashboard">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="1" y="9" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="9" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/></svg>
+        Dashboard
+        <span class="nav-badge green" id="nav-phones-count">0</span>
+      </div>
+      <div class="nav-item" data-page="connect">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M8 1v14M1 8h14" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        Connect Device
+      </div>
+      <div class="nav-item" data-page="devices">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="4" y="1" width="8" height="14" rx="2" stroke="currentColor" stroke-width="1.3"/><circle cx="8" cy="12" r="1" fill="currentColor"/></svg>
+        My Devices
+      </div>
+      <div class="nav-item" data-page="preview">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M6 7l4 2-4 2V7z" fill="currentColor"/></svg>
+        Live Preview
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Insights</div>
+      <div class="nav-item" data-page="analytics">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M1 13l4-4 3 3 4-5 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Analytics
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">System</div>
+      <div class="nav-item" data-page="settings">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M2.9 2.9l1.4 1.4M11.7 11.7l1.4 1.4M2.9 13.1l1.4-1.4M11.7 4.3l1.4-1.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        Settings
+      </div>
+      <div class="nav-item" data-page="setup">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        Setup Wizard
+      </div>
+      <div class="nav-item" data-page="help">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/><path d="M6 6c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2v1.5M8 12v.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        Help
+      </div>
+    </div>
+    </div><!-- /sidebar-nav -->
+    <div class="sidebar-footer">
+      <div class="sidebar-device-card" id="vcam-card" onclick="navigate('setup')" style="cursor:pointer" title="Click to open Setup Wizard">
+        <div class="sdc-icon">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M11 6.5l4-2.5v8l-4-2.5V6.5z" fill="currentColor"/></svg>
+        </div>
+        <div class="sdc-text">
+          <div class="sdc-name" id="vcam-card-title">Virtual Webcam</div>
+          <div class="sdc-sub" id="vcam-status-text">Inactive</div>
+        </div>
+        <div class="sdc-dot off" id="vcam-dot"></div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── Content ────────────────────────────────────────────────────────── -->
+  <main id="content">
+
+    <!-- Dashboard -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Dashboard</div>
+          <div class="page-sub">Welcome back — <span id="dash-sub">no phones connected</span></div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <button class="btn btn-secondary btn-sm" onclick="location.reload()" title="Refresh app">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M13 2v4H9M1 12V8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.34 5a6 6 0 0 1 10.26 2M11.66 9A6 6 0 0 1 1.4 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Refresh
+          </button>
+          <button class="btn btn-secondary" onclick="navigate('connect')">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Connect Phone
+          </button>
+          <button class="btn btn-primary" id="vcam-toggle-btn" onclick="smartVcamToggle()">Start Webcam</button>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="grid-4" style="margin-bottom:20px">
+        <div class="stat-card" style="--accent-color:var(--accent-g)">
+          <div class="stat-label">Connected Phones</div>
+          <div class="stat-value" id="stat-phones">0</div>
+          <div class="stat-delta neutral">Scan QR to add</div>
+          <div class="stat-icon">📱</div>
+        </div>
+        <div class="stat-card" style="--accent-color:var(--accent)">
+          <div class="stat-label">Avg Latency</div>
+          <div class="stat-value" id="stat-latency">—</div>
+          <div class="stat-delta neutral">ms</div>
+          <div class="stat-icon">⚡</div>
+        </div>
+        <div class="stat-card" style="--accent-color:var(--accent-y)">
+          <div class="stat-label">Resolution</div>
+          <div class="stat-value" id="stat-res">—</div>
+          <div class="stat-delta neutral">Active stream</div>
+          <div class="stat-icon">🎬</div>
+        </div>
+        <div class="stat-card" style="--accent-color:var(--accent-p)">
+          <div class="stat-label">Uptime</div>
+          <div class="stat-value" id="stat-uptime">0:00</div>
+          <div class="stat-delta neutral">This session</div>
+          <div class="stat-icon">⏱</div>
+        </div>
+      </div>
+
+      <!-- Connected Phones List + Quick Preview -->
+      <div class="grid-2" style="margin-bottom:20px">
+        <div class="card">
+          <div class="card-title">Connected Phones</div>
+          <div id="phones-list">
+            <div class="empty-state">
+              <div class="empty-icon">📱</div>
+              <h3>No phones yet</h3>
+              <p>Open the PhoneCam app on your Android and scan the QR code.</p>
+              <button class="btn btn-primary" style="margin-top:8px" onclick="navigate('connect')">Connect a Phone</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Live Preview</div>
+          <div class="preview-wrap" id="dash-preview" style="aspect-ratio:16/9">
+            <div class="preview-overlay">
+              <div class="ico">🎥</div>
+              <span>No active stream</span>
+            </div>
+            <canvas class="preview-canvas"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- OBS / Streaming Integration Card -->
+      <div class="card" id="obs-integration-card" style="margin-bottom:20px;padding:0;overflow:hidden;border:1px solid rgba(98,214,113,.2)">
+
+        <!-- Header -->
+        <div style="padding:16px 20px 14px;background:linear-gradient(135deg,rgba(98,214,113,.06) 0%,transparent 100%);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:38px;height:38px;border-radius:10px;background:rgba(98,214,113,.12);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🎬</div>
+            <div>
+              <div style="font-size:14.5px;font-weight:800;color:var(--text);letter-spacing:-.02em">Stream to OBS / Zoom / Meet</div>
+              <div style="font-size:12px;color:var(--text2);margin-top:2px" id="stream-status-sub">Connect a phone to get your stream URL</div>
+            </div>
+          </div>
+          <div id="stream-status-pill" style="display:flex;align-items:center;gap:7px;padding:6px 14px;border-radius:20px;background:var(--bg3);border:1px solid var(--border)">
+            <span id="stream-dot" style="width:8px;height:8px;border-radius:50%;background:var(--text3);flex-shrink:0;transition:background .3s"></span>
+            <span id="stream-pill-text" style="font-size:12px;font-weight:600;color:var(--text3)">Waiting for phone</span>
+          </div>
+        </div>
+
+        <!-- Stream URL row — the one thing users need -->
+        <div style="padding:16px 20px;background:var(--bg2);display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border)">
+          <div style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap">Stream URL</div>
+          <div style="flex:1;display:flex;align-items:center;gap:8px;min-width:0;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 12px">
+            <span style="width:8px;height:8px;border-radius:50%;background:var(--text3);flex-shrink:0" id="url-dot"></span>
+            <code id="stream-url-code" style="flex:1;font-size:12.5px;font-family:var(--mono);color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Waiting for connection…</code>
+          </div>
+          <button id="copy-stream-url-btn" onclick="copyStreamUrl()" disabled
+            style="padding:8px 18px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text3);font-size:13px;font-weight:600;cursor:not-allowed;white-space:nowrap;flex-shrink:0;transition:all .2s">
+            Copy URL
+          </button>
+        </div>
+
+        <!-- How to use — 3 app tabs -->
+        <div style="padding:14px 20px 16px">
+          <div style="display:flex;gap:6px;margin-bottom:12px">
+            <button class="obs-tab active" onclick="obsTab('obs')"    id="tab-obs">OBS Studio</button>
+            <button class="obs-tab"        onclick="obsTab('zoom')"   id="tab-zoom">Zoom</button>
+            <button class="obs-tab"        onclick="obsTab('meet')"   id="tab-meet">Meet / Teams</button>
+          </div>
+
+          <!-- OBS Studio -->
+          <div id="obstab-obs" class="obs-tab-content active">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div style="padding:12px 14px;border-radius:9px;background:var(--bg3);border:1px solid var(--border)">
+                <div style="font-size:12px;font-weight:700;color:var(--accent-g);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">✅ Recommended — Browser Source</div>
+                <div style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;color:var(--text2);line-height:1.6">
+                  <div><span style="color:var(--text3);font-weight:600;min-width:18px;display:inline-block">1.</span> In OBS → Sources panel → click <strong style="color:var(--text)">+</strong></div>
+                  <div><span style="color:var(--text3);font-weight:600;min-width:18px;display:inline-block">2.</span> Select <strong style="color:var(--text)">Browser Source</strong></div>
+                  <div><span style="color:var(--text3);font-weight:600;min-width:18px;display:inline-block">3.</span> Paste the <strong style="color:var(--accent-g)">Stream URL</strong> above</div>
+                  <div><span style="color:var(--text3);font-weight:600;min-width:18px;display:inline-block">4.</span> Set Width/Height to your resolution → OK</div>
+                </div>
+              </div>
+              <div style="padding:12px 14px;border-radius:9px;background:var(--bg3);border:1px solid var(--border)">
+                <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px" id="altcam-label" style="color:var(--text3)">Native Driver / Virtual Camera</div>
+                <div id="native-driver-steps" style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;color:var(--text2);line-height:1.6">
+                  <!-- filled by updateNativeDriverCard() -->
+                </div>
+              </div>
+            </div>
+            <div style="margin-top:10px;padding:9px 12px;background:rgba(255,200,50,.05);border:1px solid rgba(255,200,50,.15);border-radius:7px;font-size:12px;color:var(--text3)">
+              ⚠️ <strong style="color:var(--accent-y)">Never use Window Capture</strong> — it captures the whole PhoneCam app with its UI. Use Browser Source instead.
+            </div>
+          </div>
+
+          <!-- Zoom -->
+          <div id="obstab-zoom" class="obs-tab-content">
+            <div style="padding:12px 14px;border-radius:9px;background:var(--bg3);border:1px solid var(--border);margin-bottom:10px">
+              <div style="font-size:12px;font-weight:700;color:var(--accent-g);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Use phone camera in Zoom</div>
+              <div style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;color:var(--text2);line-height:1.6">
+                <div><span style="color:var(--text3);font-weight:600;min-width:18px;display:inline-block">1.</span> Click <strong style="color:var(--text)">Start Webcam</strong> above (starts OBS Virtual Camera)</div>
+                <div><span style="color:var(--text3);font-weight:600;min-width:18px;display:inline-block">2.</span> Open OBS → click <strong style="color:var(--text)">Start Virtual Camera</strong> in Controls</div>
+                <div><span style="color:var(--text3);font-weight:600;min-width:18px;display:inline-block">3.</span> In Zoom → Settings → <strong style="color:var(--text)">Video</strong> → Camera → <strong style="color:var(--accent)">OBS Virtual Camera</strong></div>
+                <div><span style="color:var(--text3);font-weight:600;min-width:18px;display:inline-block">4.</span> Done — your phone camera appears in Zoom ✅</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Meet / Teams -->
+          <div id="obstab-meet" class="obs-tab-content">
+            <div style="padding:12px 14px;border-radius:9px;background:var(--bg3);border:1px solid var(--border);margin-bottom:10px">
+              <div style="font-size:12px;font-weight:700;color:var(--accent-g);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Use phone camera in Google Meet / Teams</div>
+              <div style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;color:var(--text2);line-height:1.6">
+                <div><span style="color:var(--text3);font-weight:600;min-width:18px;display:inline-block">1.</span> Click <strong style="color:var(--text)">Start Webcam</strong> above</div>
+                <div><span style="color:var(--text3);font-weight:600;min-width:18px;display:inline-block">2.</span> Open OBS → click <strong style="color:var(--text)">Start Virtual Camera</strong></div>
+                <div><span style="color:var(--text3);font-weight:600;min-width:18px;display:inline-block">3.</span> In Meet/Teams → Settings → Camera → <strong style="color:var(--accent)">OBS Virtual Camera</strong></div>
+                <div><span style="color:var(--text3);font-weight:600;min-width:18px;display:inline-block">4.</span> Done ✅</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+            <!-- Quick Tips -->
+      <div class="card">
+        <div class="card-title">Quick Start</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+          <div style="text-align:center;padding:16px 10px">
+            <div style="font-size:28px;margin-bottom:8px">📥</div>
+            <div style="font-weight:700;font-size:13px;margin-bottom:4px">1. Install App</div>
+            <div style="color:var(--text2);font-size:12.5px">Download PhoneCam from Google Play on your Android</div>
+          </div>
+          <div style="text-align:center;padding:16px 10px">
+            <div style="font-size:28px;margin-bottom:8px">📶</div>
+            <div style="font-weight:700;font-size:13px;margin-bottom:4px">2. Same WiFi</div>
+            <div style="color:var(--text2);font-size:12.5px">Make sure phone and computer are on the same network</div>
+          </div>
+          <div style="text-align:center;padding:16px 10px">
+            <div style="font-size:28px;margin-bottom:8px">📷</div>
+            <div style="font-weight:700;font-size:13px;margin-bottom:4px">3. Scan QR</div>
+            <div style="color:var(--text2);font-size:12.5px">Tap Scan in the app and point at the QR code here</div>
+          </div>
+          <div style="text-align:center;padding:16px 10px">
+            <div style="font-size:28px;margin-bottom:8px">🎙</div>
+            <div style="font-weight:700;font-size:13px;margin-bottom:4px">4. Go Live</div>
+            <div style="color:var(--text2);font-size:12.5px">Select PhoneCam in Zoom, Meet, OBS, or any app</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Connect Device -->
+    <div class="page" id="page-connect">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Connect Device</div>
+          <div class="page-sub">Scan the QR code with your Android phone</div>
+        </div>
+      </div>
+      <div class="qr-connect-box" style="margin-bottom:20px">
+        <div class="qr-canvas-wrap">
+          <div id="qr-container" style="display:flex;align-items:center;justify-content:center;width:140px;height:140px;"></div>
+        </div>
+        <div class="qr-info">
+          <h3>Scan to verify &amp; connect</h3>
+          <p>Scan with your phone camera — it opens a webpage confirming the server is running and shows the address to enter in the PhoneCam app. Or tap <strong>Manual Connect</strong> and type the address below.</p>
+          <div class="qr-url-pill">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1C3.7 1 1 3.7 1 7s2.7 6 6 6 6-2.7 6-6-2.7-6-6-6zm0 0" stroke="currentColor" stroke-width="1.2" fill="none"/><path d="M1 7h12M7 1c-1.7 1.7-2.7 3.7-2.7 6S5.3 11.3 7 13M7 1c1.7 1.7 2.7 3.7 2.7 6S8.7 11.3 7 13" stroke="currentColor" stroke-width="1.2"/></svg>
+            <span id="http-url-display">http://loading...</span>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-secondary btn-sm" onclick="refreshQR()">🔄 Refresh QR</button>
+            <button class="btn btn-secondary btn-sm" onclick="copyWSUrl()">📋 Copy URL</button>
+            <button class="btn btn-secondary btn-sm" onclick="openDiscoveryPage()">🌐 Open in Browser</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Manual IP connection -->
+      <div class="card">
+        <div class="card-title">Manual Connection (Advanced)</div>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center">
+          <div>
+            <div style="font-size:14px;font-weight:500;margin-bottom:4px">If QR scan doesn't work</div>
+            <div style="color:var(--text2);font-size:13px">In the PhoneCam app, tap Manual Connect and enter this address:</div>
+          </div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:10px;align-items:center">
+          <input class="input-field" id="manual-url-input" value="" readonly style="font-family:var(--mono);color:var(--accent)"/>
+          <button class="btn btn-secondary" onclick="copyManualUrl()">Copy</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- My Devices — Multi-Device Management Panel -->
+    <div class="page" id="page-devices">
+      <div class="page-header">
+        <div>
+          <div class="page-title">My Devices</div>
+          <div class="page-sub" id="devices-sub">Manage all connected phones</div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-secondary btn-sm" onclick="broadcastToAll('torch','on')" id="btn-all-torch">🔦 All Torch</button>
+          <button class="btn btn-secondary btn-sm" onclick="disconnectAll()">✕ Disconnect All</button>
+          <button class="btn btn-primary btn-sm" onclick="navigate('connect')">+ Add Device</button>
+        </div>
+      </div>
+
+      <!-- Global controls bar — shown when 2+ devices connected -->
+      <div id="devices-global-bar" class="card" style="display:none;margin-bottom:16px;padding:14px 18px">
+        <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px">Global Controls — Apply to All Devices</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:13px;color:var(--text2)">Resolution</span>
+            <select class="select-field" onchange="broadcastSetting('resolution',this.value)" style="min-width:120px">
+              <option value="1920x1080">1080p</option>
+              <option value="1280x720">720p</option>
+              <option value="3840x2160">4K</option>
+              <option value="640x480">480p</option>
+            </select>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:13px;color:var(--text2)">FPS</span>
+            <select class="select-field" onchange="broadcastSetting('fps',this.value)" style="min-width:80px">
+              <option value="30">30</option>
+              <option value="60">60</option>
+              <option value="15">15</option>
+            </select>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="broadcastToAll('mirror','toggle')">↔ Mirror All</button>
+          <button class="btn btn-secondary btn-sm" onclick="broadcastToAll('torch','toggle')">🔦 Toggle Torch</button>
+        </div>
+      </div>
+
+      <!-- Device grid -->
+      <div id="devices-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px"></div>
+    </div>
+
+    <!-- Live Preview -->
+    <div class="page" id="page-preview">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Live Preview</div>
+          <div class="page-sub">See your phone camera feed in real time</div>
+        </div>
+        <div class="preview-toolbar">
+          <!-- Device source picker -->
+          <select class="select-field" id="preview-source" onchange="switchPreviewSource(this.value)" style="min-width:140px">
+            <option value="">No source</option>
+          </select>
+          <!-- Aspect ratio — auto-detected from first frame, user can override -->
+          <select class="select-field" id="aspect-ratio-picker" onchange="setAspectRatio(this.value)" title="Aspect Ratio" style="min-width:130px">
+            <option value="auto"  selected>Auto (detect)</option>
+            <option value="16/9">16:9 — Wide</option>
+            <option value="9/16">9:16 — Portrait</option>
+            <option value="4/3" >4:3  — Classic</option>
+            <option value="1/1" >1:1  — Square</option>
+            <option value="21/9">21:9 — Ultrawide</option>
+          </select>
+
+          <!-- Rotation pill group -->
+          <div class="rot-group" title="Rotate preview">
+            <button class="rot-btn rot-btn-active" id="rot-0"   onclick="setRotation(0)"   title="0° — Upright">0°</button>
+            <button class="rot-btn"                id="rot-90"  onclick="setRotation(90)"  title="90° Clockwise">90°</button>
+            <button class="rot-btn"                id="rot-180" onclick="setRotation(180)" title="180° Flipped">180°</button>
+            <button class="rot-btn"                id="rot-270" onclick="setRotation(270)" title="270° (CCW 90°)">270°</button>
+          </div>
+
+          <!-- Flip / Mirror / Fullscreen -->
+          <button class="btn btn-secondary btn-sm" id="flip-cam-btn2" onclick="flipCamera()"       title="Toggle front/back camera">🔄 Flip</button>
+          <button class="btn btn-secondary btn-sm" id="mirror-btn"    onclick="toggleMirrorBtn()" title="Mirror horizontally">↔ Mirror</button>
+          <button class="btn btn-primary    btn-sm" id="fullscreen-btn" onclick="toggleFullscreen()">⛶ Fullscreen</button>
+        </div>
+      </div>
+      <div class="preview-wrap" id="main-preview" style="margin-bottom:20px;aspect-ratio:16/9;max-height:60vh">
+        <div class="preview-overlay" id="preview-empty">
+          <div class="ico">📡</div>
+          <span>Connect a phone to see the live feed</span>
+        </div>
+        <canvas class="preview-canvas" id="preview-canvas"></canvas>
+        <div class="preview-hud" id="preview-hud" style="display:none">
+          <div class="preview-hud-pill"><div class="rec-dot"></div> LIVE</div>
+          <div class="preview-hud-pill" id="hud-res">1080p</div>
+          <div class="preview-hud-pill" id="hud-fps">30fps</div>
+          <div class="preview-hud-pill" id="hud-latency">12ms</div>
+        </div>
+      </div>
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-title" style="display:flex;align-items:center;justify-content:space-between">
+            Camera Controls
+            <button class="btn btn-secondary btn-sm" onclick="flipCamera()" id="flip-cam-btn" title="Flip front/back camera">
+              🔄 Flip Camera
+            </button>
+          </div>
+          <div class="settings-row">
+            <div><div class="settings-row-label">Resolution</div></div>
+            <select class="select-field" id="ctrl-resolution" onchange="sendCameraCmd('resolution', this.value)">
+              <option value="1920x1080">1080p</option>
+              <option value="1280x720">720p</option>
+              <option value="3840x2160">4K</option>
+              <option value="640x480">480p</option>
+            </select>
+          </div>
+          <div class="settings-row">
+            <div><div class="settings-row-label">Frame Rate</div></div>
+            <select class="select-field" id="ctrl-fps" onchange="sendCameraCmd('fps', this.value)">
+              <option value="30">30 fps</option>
+              <option value="60">60 fps</option>
+              <option value="24">24 fps</option>
+              <option value="15">15 fps</option>
+            </select>
+          </div>
+          <div class="settings-row">
+            <div><div class="settings-row-label">Flash / Torch</div></div>
+            <label class="toggle"><input type="checkbox" id="ctrl-torch" onchange="sendCameraCmd('torch', this.checked)"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+          </div>
+          <div class="settings-row">
+            <div>
+              <div class="settings-row-label">Mirror Image</div>
+              <div class="settings-row-sub">Flip preview horizontally</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="ctrl-mirror" onchange="applyMirror(this.checked)"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Audio</div>
+          <div class="settings-row">
+            <div><div class="settings-row-label">Phone Microphone</div></div>
+            <label class="toggle"><input type="checkbox" checked onchange="sendCameraCmd('mic', this.checked)"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+          </div>
+          <div class="settings-row">
+            <div><div class="settings-row-label">Noise Suppression</div></div>
+            <label class="toggle"><input type="checkbox" checked onchange="sendCameraCmd('noise_suppression', this.checked)"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Stream Info</div>
+          <div class="settings-row">
+            <div class="settings-row-label">Latency</div>
+            <span id="info-latency" style="font-family:var(--mono);color:var(--accent-g)">— ms</span>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-label">Frames/sec</div>
+            <span id="info-fps" style="font-family:var(--mono)">—</span>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-label">Data Rate</div>
+            <span id="info-bitrate" style="font-family:var(--mono)">— Mbps</span>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-label">Signal</div>
+            <span id="info-signal" style="color:var(--accent-g)">Excellent</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Analytics -->
+    <div class="page" id="page-analytics">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Analytics</div>
+          <div class="page-sub">Session performance and usage stats</div>
+        </div>
+      </div>
+      <div class="grid-2" style="margin-bottom:20px">
+        <div class="card">
+          <div class="card-title">Latency Over Time</div>
+          <canvas id="latency-chart" class="sparkline" height="60"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-title">Frame Rate</div>
+          <canvas id="fps-chart" class="sparkline" height="60"></canvas>
+        </div>
+      </div>
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-title">Session Summary</div>
+          <div class="settings-row"><div class="settings-row-label">Total Uptime</div><span id="anal-uptime" style="font-family:var(--mono)">0:00:00</span></div>
+          <div class="settings-row"><div class="settings-row-label">Avg Latency</div><span id="anal-latency" style="font-family:var(--mono);color:var(--accent-g)">—</span></div>
+          <div class="settings-row"><div class="settings-row-label">Peak FPS</div><span id="anal-fps" style="font-family:var(--mono)">—</span></div>
+          <div class="settings-row"><div class="settings-row-label">Frames Dropped</div><span id="anal-drops" style="font-family:var(--mono);color:var(--accent-y)">0</span></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Connection Quality</div>
+          <div style="text-align:center;padding:20px 0">
+            <div style="font-size:48px;font-weight:900;font-family:var(--mono);color:var(--accent-g)" id="quality-score">—</div>
+            <div style="color:var(--text2);font-size:12.5px;margin-top:6px">Quality Score</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Data Usage</div>
+          <div class="settings-row"><div class="settings-row-label">Video Received</div><span id="anal-data" style="font-family:var(--mono)">0 MB</span></div>
+          <div class="settings-row"><div class="settings-row-label">Audio Received</div><span id="anal-audio" style="font-family:var(--mono)">0 MB</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div class="page" id="page-settings">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Settings</div>
+          <div class="page-sub">Customize your PhoneCam experience</div>
+        </div>
+      </div>
+      <div class="settings-layout">
+        <div>
+          <div class="settings-nav-item active" data-spanel="general">⚙️ General</div>
+          <div class="settings-nav-item" data-spanel="video">🎬 Video</div>
+          <div class="settings-nav-item" data-spanel="audio">🎙 Audio</div>
+          <div class="settings-nav-item" data-spanel="network">📶 Network</div>
+          <div class="settings-nav-item" data-spanel="advanced">🔧 Advanced</div>
+        </div>
+        <div>
+          <div class="settings-panel active card" id="spanel-general">
+            <div class="settings-row">
+              <div><div class="settings-row-label">Launch at startup</div><div class="settings-row-sub">Start PhoneCam when your computer boots</div></div>
+              <label class="toggle"><input type="checkbox" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+            </div>
+            <div class="settings-row">
+              <div><div class="settings-row-label">Minimize to tray on close</div><div class="settings-row-sub">Keep running in the background</div></div>
+              <label class="toggle"><input type="checkbox" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+            </div>
+            <div class="settings-row">
+              <div><div class="settings-row-label">Show desktop notifications</div><div class="settings-row-sub">Get alerts when phones connect or disconnect</div></div>
+              <label class="toggle"><input type="checkbox" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+            </div>
+            <div class="settings-row">
+              <div><div class="settings-row-label">Auto-start virtual webcam</div><div class="settings-row-sub">Activate virtual camera when a phone connects</div></div>
+              <label class="toggle"><input type="checkbox"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+            </div>
+          </div>
+          <div class="settings-panel card" id="spanel-video">
+            <div class="settings-row">
+              <div><div class="settings-row-label">Default Resolution</div></div>
+              <select class="select-field"><option>1080p (1920×1080)</option><option>720p (1280×720)</option><option>4K (3840×2160)</option></select>
+            </div>
+            <div class="settings-row">
+              <div><div class="settings-row-label">Default Frame Rate</div></div>
+              <select class="select-field"><option>30 fps</option><option>60 fps</option><option>24 fps</option></select>
+            </div>
+            <div class="settings-row">
+              <div><div class="settings-row-label">Video Quality</div></div>
+              <select class="select-field"><option>Balanced</option><option>High Quality</option><option>Low Latency</option></select>
+            </div>
+            <div class="settings-row">
+              <div><div class="settings-row-label">Hardware Acceleration</div><div class="settings-row-sub">Use GPU for video decoding (recommended)</div></div>
+              <label class="toggle"><input type="checkbox" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+            </div>
+          </div>
+          <div class="settings-panel card" id="spanel-audio">
+            <div class="settings-row">
+              <div><div class="settings-row-label">Enable Phone Microphone</div></div>
+              <label class="toggle"><input type="checkbox" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+            </div>
+            <div class="settings-row">
+              <div><div class="settings-row-label">Noise Suppression</div></div>
+              <label class="toggle"><input type="checkbox" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+            </div>
+            <div class="settings-row">
+              <div><div class="settings-row-label">Echo Cancellation</div></div>
+              <label class="toggle"><input type="checkbox" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+            </div>
+            <div class="settings-row">
+              <div><div class="settings-row-label">Audio Bitrate</div></div>
+              <select class="select-field"><option>128 kbps</option><option>256 kbps</option><option>64 kbps</option></select>
+            </div>
+          </div>
+          <div class="settings-panel card" id="spanel-network">
+            <div class="settings-row">
+              <div><div class="settings-row-label">WebSocket Port</div><div class="settings-row-sub">Default: 7779</div></div>
+              <input class="input-field" value="7779" style="width:90px;text-align:center;font-family:var(--mono)"/>
+            </div>
+            <div class="settings-row">
+              <div><div class="settings-row-label">Discovery (HTTP) Port</div><div class="settings-row-sub">Default: 7780</div></div>
+              <input class="input-field" value="7780" style="width:90px;text-align:center;font-family:var(--mono)"/>
+            </div>
+            <div class="settings-row">
+              <div><div class="settings-row-label">Bind to Interface</div></div>
+              <select class="select-field"><option>All Interfaces (0.0.0.0)</option><option>WiFi Only</option></select>
+            </div>
+          </div>
+          <div class="settings-panel card" id="spanel-advanced">
+            <div class="settings-row">
+              <div><div class="settings-row-label">Debug Logging</div><div class="settings-row-sub">Write detailed logs to file</div></div>
+              <label class="toggle"><input type="checkbox"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+            </div>
+            <div class="settings-row">
+              <div><div class="settings-row-label">Reset All Settings</div></div>
+              <button class="btn btn-danger btn-sm">Reset</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Setup Wizard -->
+    <div class="page" id="page-setup">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Virtual Camera Setup</div>
+          <div class="page-sub">Install drivers &amp; configure your virtual webcam for all apps</div>
+        </div>
+        <button class="btn btn-secondary" onclick="setupCheckStatus()">↻ Re-check</button>
+      </div>
+
+      <!-- ── Windows Native Driver Banner (Windows only) ─────────────────── -->
+      <div id="native-driver-banner" style="display:none;margin-bottom:20px">
+
+        <!-- ══ STATE A: Driver NOT installed ════════════════════════════════ -->
+        <div id="driver-state-not-installed" style="display:none">
+          <div style="background:linear-gradient(135deg,rgba(27,111,235,.07),transparent);border:1px solid rgba(27,111,235,.25);border-radius:16px;padding:22px 24px">
+            <div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">
+              <div style="width:48px;height:48px;border-radius:12px;background:rgba(27,111,235,.12);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">📡</div>
+              <div style="flex:1;min-width:200px">
+
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+                  <div style="font-size:15px;font-weight:800;color:var(--text)">PhoneCam Native Driver</div>
+                  <div style="padding:2px 10px;border-radius:20px;background:rgba(255,180,0,.12);font-size:11px;font-weight:700;color:#f5a623;border:1px solid rgba(255,180,0,.25)">Optional — Not Installed</div>
+                </div>
+
+                <!-- What you get with the driver -->
+                <div style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:14px">
+                  <strong style="color:var(--text)">Without driver</strong> — app works via MJPEG stream through OBS. Works great now.<br>
+                  <strong style="color:var(--accent-g)">With native driver</strong> — phone appears directly in <strong>Zoom, WhatsApp, Teams, Meet</strong> as a real webcam. No OBS needed, lower RAM, zero lag.
+                </div>
+
+                <!-- Download button -->
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+                  <button class="btn btn-primary" onclick="openDriverDownload()" style="padding:10px 22px;font-size:14px;display:flex;align-items:center;gap:8px">
+                    ⬇ Coming Soon: Native Driver
+                    <span style="font-size:11px;opacity:.75;font-weight:400"></span>
+                  </button>
+                  <span style="font-size:12px;color:var(--text3)">Windows 10/11 • 64-bit</span>
+                </div>
+
+                <!-- Manual install steps (collapsible) -->
+                <details style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden">
+                  <summary style="padding:10px 14px;font-size:12.5px;font-weight:600;color:var(--text2);cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px">
+                    <span>📋</span> Already downloaded? Manual install steps
+                  </summary>
+                  <div style="padding:12px 14px 14px;border-top:1px solid var(--border)">
+                    <div style="display:flex;flex-direction:column;gap:8px;font-size:12.5px;color:var(--text2)">
+                      <div style="display:flex;gap:10px;align-items:flex-start">
+                        <span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">1</span>
+                        <span>Download <strong style="color:var(--text)">PhoneCam-Driver.zip</strong> from https://github.com/Sudo0xSajal/PhonecamConnect/releases/latest/download/PhoneCam-Driver.zip</span>
+                      </div>
+                      <div style="display:flex;gap:10px;align-items:flex-start">
+                        <span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">2</span>
+                        <span>Right-click the file → <strong style="color:var(--text)">Extract and Run as Administrator</strong></span>
+                      </div>
+                      <div style="display:flex;gap:10px;align-items:flex-start">
+                        <span style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">3</span>
+                        <span>Installation completes silently in ~5 seconds</span>
+                      </div>
+                      <div style="display:flex;gap:10px;align-items:flex-start">
+                        <span style="width:20px;height:20px;border-radius:50%;background:var(--accent-g);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">4</span>
+                        <span>Click <strong style="color:var(--text)">Re-check</strong> above — status will update to Installed</span>
+                      </div>
+                    </div>
+                  </div>
+                </details>
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ STATE B: Driver IS installed ══════════════════════════════════ -->
+        <div id="driver-state-installed" style="display:none">
+          <div style="background:linear-gradient(135deg,rgba(22,199,132,.07),transparent);border:1px solid rgba(22,199,132,.3);border-radius:16px;padding:22px 24px">
+            <div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">
+              <div style="width:48px;height:48px;border-radius:12px;background:rgba(22,199,132,.15);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0">✅</div>
+              <div style="flex:1;min-width:200px">
+
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+                  <div style="font-size:15px;font-weight:800;color:var(--text)">PhoneCam Native Driver</div>
+                  <div style="display:inline-flex;align-items:center;gap:5px;padding:2px 10px;border-radius:20px;background:rgba(22,199,132,.15);font-size:11px;font-weight:700;color:var(--accent-g);border:1px solid rgba(22,199,132,.3)">
+                    <span style="width:6px;height:6px;border-radius:50%;background:var(--accent-g);animation:pulse-g 1.5s infinite"></span>
+                    Installed & Active
+                  </div>
+                </div>
+
+                <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:12px">
+                  <strong style="color:var(--accent-g)">"PhoneCam Connect"</strong> is registered as a Windows webcam.
+                  Open any app → camera settings → select <strong style="color:var(--accent-g)">PhoneCam Connect</strong>.
+                </div>
+
+                <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">
+                  <div style="padding:5px 12px;background:var(--bg2);border:1px solid rgba(22,199,132,.2);border-radius:20px;font-size:12px;color:var(--accent-g);font-weight:600">Zoom ✅</div>
+                  <div style="padding:5px 12px;background:var(--bg2);border:1px solid rgba(22,199,132,.2);border-radius:20px;font-size:12px;color:var(--accent-g);font-weight:600">WhatsApp ✅</div>
+                  <div style="padding:5px 12px;background:var(--bg2);border:1px solid rgba(22,199,132,.2);border-radius:20px;font-size:12px;color:var(--accent-g);font-weight:600">Teams ✅</div>
+                  <div style="padding:5px 12px;background:var(--bg2);border:1px solid rgba(22,199,132,.2);border-radius:20px;font-size:12px;color:var(--accent-g);font-weight:600">Meet ✅</div>
+                  <div style="padding:5px 12px;background:var(--bg2);border:1px solid rgba(22,199,132,.2);border-radius:20px;font-size:12px;color:var(--accent-g);font-weight:600">OBS ✅</div>
+                  <div style="padding:5px 12px;background:var(--bg2);border:1px solid rgba(22,199,132,.2);border-radius:20px;font-size:12px;color:var(--accent-g);font-weight:600">Discord ✅</div>
+                </div>
+
+                <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;flex-wrap:wrap">
+                  <span id="pipe-dot" style="width:8px;height:8px;border-radius:50%;background:var(--text3);flex-shrink:0"></span>
+                  <span id="pipe-status-text" style="font-size:12.5px;color:var(--text2);flex:1">Not streaming — start webcam to activate</span>
+                  <code style="font-family:var(--mono);font-size:11px;color:var(--text3)">\.\pipe\phonecam_video</code>
+                  <button class="btn btn-danger btn-sm" id="driver-uninstall-btn" onclick="setupUninstallDriver()" style="margin-left:auto">🗑 Uninstall</button>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Shared: log output panel -->
+        <div id="driver-pipe-status" style="display:none"></div>
+      </div>
+
+      <!-- OS Banner -->
+      <div class="card" id="setup-os-banner" style="margin-bottom:16px;display:flex;align-items:center;gap:16px;padding:18px 20px">
+        <div style="font-size:40px" id="setup-os-icon">⏳</div>
+        <div>
+          <div style="font-size:16px;font-weight:700;color:var(--text)" id="setup-os-name">Detecting your OS…</div>
+          <div style="font-size:13px;color:var(--text2);margin-top:3px" id="setup-os-desc">Checking installed components</div>
+        </div>
+        <div style="margin-left:auto">
+          <div id="setup-ready-badge" style="font-size:13px;padding:6px 14px;border-radius:20px;background:var(--bg3);color:var(--text2);font-weight:600">Checking…</div>
+        </div>
+      </div>
+
+      <!-- Steps -->
+      <div id="setup-steps-container" style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px"></div>
+
+      <!-- How to use -->
+      <div class="card" id="setup-howto" style="display:none">
+        <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:14px;text-transform:uppercase;letter-spacing:.05em">How to Use Virtual Camera</div>
+        <div id="setup-howto-content"></div>
+      </div>
+
+      <!-- Log output -->
+      <div class="card" id="setup-log-card" style="display:none;margin-top:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Install Log</div>
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('setup-log').textContent=''">Clear</button>
+        </div>
+        <pre id="setup-log" style="font-family:var(--mono);font-size:11px;color:var(--accent-g);background:var(--bg2);padding:12px 14px;border-radius:8px;max-height:240px;overflow-y:auto;white-space:pre-wrap;margin:0"></pre>
+      </div>
+    </div>
+
+    <!-- Help -->
+    <div class="page" id="page-help">
+      <div class="page-header">
+        <div><div class="page-title">Help & Support</div><div class="page-sub">Troubleshooting and documentation</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-title">Troubleshooting</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="padding:12px;background:var(--bg3);border-radius:var(--radius);border-left:3px solid var(--accent)">
+              <div style="font-weight:600;font-size:13.5px;margin-bottom:4px">Phone can't find computer</div>
+              <div style="color:var(--text2);font-size:13px">Make sure both devices are on the same WiFi network. Check firewall — allow port 7779 (TCP/UDP).</div>
+            </div>
+            <div style="padding:12px;background:var(--bg3);border-radius:var(--radius);border-left:3px solid var(--accent-y)">
+              <div style="font-weight:600;font-size:13.5px;margin-bottom:4px">High latency / laggy video</div>
+              <div style="color:var(--text2);font-size:13px">Lower resolution to 720p. Make sure you're on 5GHz WiFi, not 2.4GHz.</div>
+            </div>
+            <div style="padding:12px;background:var(--bg3);border-radius:var(--radius);border-left:3px solid var(--accent-g)">
+              <div style="font-weight:600;font-size:13.5px;margin-bottom:4px">PhoneCam not showing in apps</div>
+              <div style="color:var(--text2);font-size:13px">Click "Start Virtual Webcam" on the Dashboard. On Linux, install v4l2loopback first.</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Linux Setup (v4l2loopback)</div>
+          <div style="color:var(--text2);font-size:13px;margin-bottom:12px">Install the kernel module for virtual webcam on Linux:</div>
+          <div style="background:var(--sidebar);border:1px solid var(--border);border-radius:var(--radius);padding:14px;font-family:var(--mono);font-size:12.5px;line-height:1.8;color:var(--accent-g)">
+            sudo apt install v4l2loopback-dkms<br>
+            sudo modprobe v4l2loopback<br>
+            sudo modprobe v4l2loopback devices=1 \<br>
+            &nbsp;&nbsp;video_nr=10 \<br>
+            &nbsp;&nbsp;card_label="PhoneCam"<br>
+            &nbsp;&nbsp;exclusive_caps=1
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<!-- Onboarding -->
+<div id="onboarding" style="display:none">
+  <div class="onboarding-card">
+    <div class="ob-steps">
+      <div class="ob-step done" id="ob-step-0"></div>
+      <div class="ob-step" id="ob-step-1"></div>
+      <div class="ob-step" id="ob-step-2"></div>
+      <div class="ob-step" id="ob-step-3"></div>
+    </div>
+    <div class="ob-content active" id="ob-0">
+      <div class="ob-icon">👋</div>
+      <div class="ob-title">Welcome to PhoneCam!</div>
+      <div class="ob-desc">Turn your Android into a professional webcam in seconds. 100% local, no cloud, ultra-low latency. Let's get you set up.</div>
+    </div>
+    <div class="ob-content" id="ob-1">
+      <div class="ob-icon">📱</div>
+      <div class="ob-title">Install the Android App</div>
+      <div class="ob-desc">Download the PhoneCam app from Google Play on your Android phone. It's free and under 5MB.</div>
+    </div>
+    <div class="ob-content" id="ob-2">
+      <div class="ob-icon">📶</div>
+      <div class="ob-title">Same WiFi Network</div>
+      <div class="ob-desc">Make sure your phone and this computer are connected to the same WiFi network. 5GHz is recommended for best performance.</div>
+    </div>
+    <div class="ob-content" id="ob-3">
+      <div class="ob-icon">✅</div>
+      <div class="ob-title">All Set!</div>
+      <div class="ob-desc">Open the PhoneCam app → tap "Scan QR" → point at the QR code on the Connect page. Your phone will stream instantly.</div>
+    </div>
+    <div class="ob-actions">
+      <button class="btn btn-secondary" id="ob-skip" onclick="skipOnboarding()">Skip</button>
+      <button class="btn btn-primary" id="ob-next" onclick="nextOnboarding()">Continue →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+
+// ── Global error handler — catches ALL uncaught JS errors ─────────────────
+// Shows a dismissable toast instead of a silent crash.
+// This prevents "X is not defined" from breaking the whole UI.
+window.onerror = function(msg, src, line, col, err) {
+  const skip = ['ResizeObserver loop', 'Non-Error promise rejection'];
+  if (skip.some(s => String(msg).includes(s))) return true;
+  console.error('[PhoneCam] Uncaught:', msg, 'at', src, line + ':' + col);
+  showErrorToast(String(msg));
+  return true; // prevent default browser error handling
+};
+window.onunhandledrejection = function(e) {
+  const msg = e.reason?.message || String(e.reason) || 'Unhandled promise rejection';
+  if (msg.includes('ResizeObserver')) return;
+  console.error('[PhoneCam] Unhandled rejection:', msg);
+  showErrorToast(msg);
+};
+
+function showErrorToast(msg) {
+  const el = document.getElementById('error-toast');
+  if (!el) return;
+  el.textContent = '⚠ ' + msg;
+  el.classList.add('visible');
+  clearTimeout(el._timer);
+  el._timer = setTimeout(() => el.classList.remove('visible'), 5000);
+}
+
+// ─── State ────────────────────────────────────────────────────────────────
+const state = {
+  currentPage:          'dashboard',
+  currentSettingsPanel: 'general',
+  phones:               new Map(),
+  vcamActive:           false,
+  appInfo:              null,
+  wsUrl:                null,
+  httpUrl:              null,
+  sessionStart:         Date.now(),
+  latencyHistory:       [],
+  fpsHistory:           [],
+  totalData:            0,
+  obStep:               0,
+  obMax:                3,
+
+  // ── Preview / camera state ────────────────────────────────────────────
+  // rotationDeg: ALWAYS starts at 0 — never persisted across sessions.
+  // The correct value is auto-detected from the first frame dimensions.
+  rotationDeg:          0,
+  mirrorEnabled:        false,
+  activePreviewSocket:  null,
+  previewAspect:        '16/9',
+  _userPickedAspect:    false,   // true = user locked picker, skip auto-detect
+  _autoRotationDone:    false,   // true = first-frame auto-rotation already applied
+  _latSamples:          [],
+  _bitsThisSec:         0,
+  _bitsTimer:           0,
+  _lastVcamMode:        null,    // 'native' | 'v4l2' | 'pipe' | 'mjpeg' | 'avfoundation'
+  activeWebcamSourceId:  null,    // socketId of phone currently routed to virtual webcam
+};
+
+// ─── Navigation ───────────────────────────────────────────────────────────
+function navigate(page) {
+  // ── Step 1: hide ALL pages via class only (CSS !important handles display) ──
+  document.querySelectorAll('.page').forEach(p => {
+    p.classList.remove('active');
+    // Never touch p.style.display — CSS !important rule owns it
+  });
+
+  // ── Step 2: deactivate all nav items ──────────────────────────────────────
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+  // ── Step 3: activate target page ──────────────────────────────────────────
+  const targetPage = document.getElementById(`page-${page}`);
+  if (!targetPage) {
+    console.warn(`[Navigate] Page not found: page-${page}`);
+    return;
+  }
+  targetPage.classList.add('active');
+
+  // ── Step 4: activate nav item ──────────────────────────────────────────────
+  const navItem = document.querySelector(`[data-page="${page}"]`);
+  if (navItem) navItem.classList.add('active');
+
+  // ── Step 5: scroll content area to top ────────────────────────────────────
+  const contentEl = document.getElementById('content');
+  if (contentEl) contentEl.scrollTop = 0;
+
+  // ── Step 6: page-specific init ────────────────────────────────────────────
+  if (page === 'setup') setTimeout(setupCheckStatus, 100);
+  if (page === 'connect') setTimeout(() => { const qr = document.getElementById('qr-canvas'); if (qr && !qr._loaded) loadQR(); }, 50);
+
+  state.currentPage = page;
+}
+
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => navigate(item.dataset.page));
+});
+
+// Settings panel nav
+document.querySelectorAll('.settings-nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    const panel = item.dataset.spanel;
+    document.querySelectorAll('.settings-nav-item').forEach(i => i.classList.remove('active'));
+    document.querySelectorAll('.settings-panel').forEach(p => p.classList.remove('active'));
+    item.classList.add('active');
+    document.getElementById(`spanel-${panel}`)?.classList.add('active');
+  });
+});
+
+// ─── Toast System ─────────────────────────────────────────────────────────
+function toast(message, type = 'info', duration = 3000) {
+  const icons = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️' };
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span class="toast-icon">${icons[type] || 'ℹ️'}</span><span>${message}</span>`;
+  const container = document.getElementById('toast-container');
+  container.appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateY(8px)'; el.style.transition = '.2s'; setTimeout(() => el.remove(), 200); }, duration);
+}
+
+// ─── Onboarding ───────────────────────────────────────────────────────────
+// Use in-memory flag — localStorage is blocked by Electron's CSP.
+// Onboarding shows once per app launch, which is the right UX anyway.
+let _onboardingShown = false;
+function showOnboarding() {
+  if (_onboardingShown) return;
+  _onboardingShown = true;
+  document.getElementById('onboarding').style.display = 'flex';
+}
+function nextOnboarding() {
+  state.obStep++;
+  if (state.obStep > state.obMax) { skipOnboarding(); return; }
+  document.querySelectorAll('.ob-content').forEach((c, i) => c.classList.toggle('active', i === state.obStep));
+  document.querySelectorAll('.ob-step').forEach((s, i) => s.classList.toggle('done', i <= state.obStep));
+  if (state.obStep === state.obMax) document.getElementById('ob-next').textContent = 'Get Started →';
+}
+function skipOnboarding() {
+  document.getElementById('onboarding').style.display = 'none';
+}
+
+// ─── QR Code ──────────────────────────────────────────────────────────────
+function renderQRIntoDiv(url) {
+  const container = document.getElementById('qr-container');
+  container.innerHTML = '';
+  try {
+    new QRCode(container, {
+      text: url,
+      width: 140,
+      height: 140,
+      colorDark: '#1B6FEB',
+      colorLight: '#0F0E0C',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+    // Style the generated canvas/img
+    const el = container.querySelector('canvas') || container.querySelector('img');
+    if (el) {
+      el.style.borderRadius = '8px';
+      el.style.display = 'block';
+    }
+  } catch (e) {
+    container.innerHTML = `<div style="color:var(--accent);font-family:var(--mono);font-size:10px;text-align:center;word-break:break-all;padding:8px">${url}</div>`;
+  }
+}
+
+async function loadQR() {
+  const container = document.getElementById('qr-container');
+  container.innerHTML = `<div style="color:var(--text3);font-size:11px;text-align:center;padding:16px">Generating…</div>`;
+
+  if (window.phonecam) {
+    // Electron: ask main process to generate QR data URL (uses real local IP)
+    try {
+      const qrDataUrl = await window.phonecam.getQRCode({ size: 280 });
+      container.innerHTML = '';
+      const img = document.createElement('img');
+      img.src = qrDataUrl;
+      img.style.cssText = 'width:140px;height:140px;border-radius:8px;display:block;';
+      container.appendChild(img);
+      return;
+    } catch (e) {
+      console.error('[QR] IPC getQRCode failed, falling back to client-side:', e);
+      // Fall through to client-side rendering below
+    }
+  }
+
+  // Client-side rendering via qrcodejs (dev mode OR IPC fallback)
+  // QR encodes the HTTP URL so scanning opens a real confirmation page
+  if (state.httpUrl) {
+    renderQRIntoDiv(state.httpUrl);
+  } else {
+    container.innerHTML = `<div style="color:var(--accent-r);font-size:11px;text-align:center;padding:8px">No URL —<br>check connection</div>`;
+  }
+}
+
+function refreshQR() { loadQR(); toast('QR code refreshed', 'success'); }
+
+async function copyWSUrl() {
+  const url = document.getElementById('http-url-display').textContent;
+  try { await navigator.clipboard.writeText(url); toast('URL copied!', 'success'); } catch (e) { toast('Copy failed', 'error'); }
+}
+async function copyManualUrl() {
+  const url = document.getElementById('manual-url-input').value;
+  try { await navigator.clipboard.writeText(url); toast('URL copied!', 'success'); } catch (e) {}
+}
+function openDiscoveryPage() {
+  if (!state.httpUrl) { toast('App info not loaded yet', 'error'); return; }
+  window.phonecam?.openExternal(state.httpUrl);
+}
+
+// ─── Virtual Webcam ─────────────────────────────────────────────────────────
+async function toggleVcam() {
+  const btn = document.getElementById('vcam-toggle-btn');
+
+  if (!state.vcamActive) {
+    // ── Start ────────────────────────────────────────────────────────────
+    if (state.phones.size === 0) {
+      showToast('Connect a phone first', 'error');
+      return;
+    }
+
+    // Use active phone's resolution and fps for best match
+    const activePhone    = state.phones.get(state.activePreviewSocket)
+                        || state.phones.values().next().value;
+    const resolution     = activePhone?.resolution || '1920x1080';
+    const fps            = activePhone?.fps        || 30;
+
+    btn.disabled    = true;
+    btn.textContent = 'Starting…';
+    btn.className   = 'btn btn-secondary';
+    showToast('Starting virtual webcam…', 'info', 2000);
+
+    try {
+      const res = await window.phonecam?.vcamStart({ resolution, fps });
+      state.vcamActive = res?.active === true;
+
+      if (state.vcamActive) {
+        const device = res?.device || 'Virtual Camera';
+        showToast(`✅ Webcam active — ${device}`, 'success');
+        if (res?.mjpegUrl) {
+          // Fallback mode — show the URL inline
+          showToast(`📡 MJPEG fallback: ${res.mjpegUrl}`, 'info', 8000);
+        }
+      } else {
+        const errMsg = res?.error || 'Unknown error — check Setup Wizard';
+        showToast(`❌ Webcam failed: ${errMsg}`, 'error', 6000);
+      }
+    } catch (e) {
+      console.error('[VCam] Start error:', e);
+      state.vcamActive = false;
+      showToast('Virtual webcam error: ' + (e.message || e), 'error');
+    }
+
+  } else {
+    // ── Stop ─────────────────────────────────────────────────────────────
+    btn.disabled    = true;
+    btn.textContent = 'Stopping…';
+    try {
+      await window.phonecam?.vcamStop();
+      showToast('Virtual webcam stopped', 'info');
+    } catch (e) {
+      console.error('[VCam] Stop error:', e);
+    }
+    state.vcamActive = false;
+  }
+
+  updateVcamUI();
+}
+
+function updateVcamUI() {
+  const btn  = document.getElementById('vcam-toggle-btn');
+  const dot  = document.getElementById('vcam-dot');
+  const text = document.getElementById('vcam-status-text');
+  const title = document.getElementById('vcam-card-title');
+  if (!btn) return;
+  btn.disabled = false;
+
+  if (state.vcamActive) {
+    btn.textContent = 'Stop Webcam';
+    btn.className   = 'btn btn-danger';
+    if (dot)  dot.classList.remove('off');
+    // Show mode in sidebar card
+    const mode = state._lastVcamMode;
+    if (mode === 'native') {
+      if (title) title.textContent = '🎥 Native Driver';
+      if (text)  text.textContent  = 'PhoneCam Direct';
+    } else if (mode === 'v4l2') {
+      if (title) title.textContent = 'Virtual Webcam';
+      if (text)  text.textContent  = '/dev/video10';
+    } else {
+      if (title) title.textContent = 'Virtual Webcam';
+      if (text)  text.textContent  = 'MJPEG Stream';
+    }
+  } else {
+    btn.textContent = 'Start Webcam';
+    btn.className   = 'btn btn-primary';
+    if (dot)   dot.classList.add('off');
+    if (title) title.textContent = 'Virtual Webcam';
+    if (text)  text.textContent  = 'Inactive';
+  }
+
+  // Update OBS integration card
+  updateOBSCard(state.vcamActive, state._lastMjpegUrl);
+  // Throttled refresh — device cards and dropdown (max once per 200ms)
+  // Only if we actually have phones connected (skip if empty)
+  if (state.phones.size > 0) {
+    updateDevicesListThrottled();
+    updatePreviewSourcesThrottled();
+  }
+}
+
+// ── State for MJPEG URL ───────────────────────────────────────────────────
+if (!state._lastMjpegUrl) state._lastMjpegUrl = null;
+
+// ── OBS tab switcher ──────────────────────────────────────────────────────
+function obsTab(id) {
+  document.querySelectorAll('.obs-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.obs-tab-content').forEach(c => c.classList.remove('active'));
+  const btn = document.getElementById('tab-' + id);
+  const tab = document.getElementById('obstab-' + id);
+  if (btn) btn.classList.add('active');
+  if (tab) tab.classList.add('active');
+}
+
+// ── Copy stream URL ────────────────────────────────────────────────────────
+function copyMjpegUrl() { copyStreamUrl(); }
+function copyStreamUrl() {
+  const url = state._lastMjpegUrl || 'http://localhost:7781/stream';
+  navigator.clipboard.writeText(url).then(() => {
+    showToast('✅ Stream URL copied — paste it in OBS Browser Source', 'success', 4000);
+  }).catch(() => {
+    showToast(url, 'info', 8000);
+  });
+}
+
+// ── Update the stream card when phone connects or webcam starts ───────────
+function updateOBSCard(active, mjpegUrl) {
+  const url      = mjpegUrl || (active ? 'http://localhost:7781/stream' : null);
+  const urlCode  = document.getElementById('stream-url-code');
+  const copyBtn  = document.getElementById('copy-stream-url-btn');
+  const dot      = document.getElementById('stream-dot');
+  const pillText = document.getElementById('stream-pill-text');
+  const subText  = document.getElementById('stream-status-sub');
+  const urlDot   = document.getElementById('url-dot');
+
+  if (!urlCode) return;
+
+  if (url) {
+    state._lastMjpegUrl = url;
+    // Show URL live and green
+    urlCode.textContent  = url;
+    urlCode.style.color  = 'var(--accent-g)';
+    if (urlDot) urlDot.style.background = 'var(--accent-g)';
+
+    // Enable copy button
+    if (copyBtn) {
+      copyBtn.disabled         = false;
+      copyBtn.style.cursor     = 'pointer';
+      copyBtn.style.background = 'var(--accent)';
+      copyBtn.style.color      = '#fff';
+      copyBtn.style.borderColor= 'var(--accent)';
+    }
+
+    // Status pill
+    if (dot)      dot.style.background  = 'var(--accent-g)';
+    if (pillText) { pillText.textContent = '🟢 Live'; pillText.style.color = 'var(--accent-g)'; }
+    if (subText)  subText.textContent   = 'Copy the URL below and paste it into OBS Browser Source';
+  } else {
+    // No stream yet
+    if (urlCode)  { urlCode.textContent = 'Waiting for connection…'; urlCode.style.color = 'var(--text3)'; }
+    if (urlDot)   urlDot.style.background = 'var(--text3)';
+    if (copyBtn)  { copyBtn.disabled = true; copyBtn.style.cursor = 'not-allowed'; copyBtn.style.background = 'var(--bg3)'; copyBtn.style.color = 'var(--text3)'; copyBtn.style.borderColor = 'var(--border)'; }
+    if (dot)      dot.style.background  = 'var(--text3)';
+    if (pillText) { pillText.textContent = 'Waiting for phone'; pillText.style.color = 'var(--text3)'; }
+    if (subText)  subText.textContent   = 'Connect a phone to get your stream URL';
+  }
+}
+
+// ─── Phone Events ─────────────────────────────────────────────────────────
+function handlePhoneConnected(phone) {
+  state.phones.set(phone.socketId, phone);
+  if (!window._phonesMap) window._phonesMap = new Map();
+  window._phonesMap.set(phone.socketId, phone);
+  updatePhonesList();
+  updateStats();
+  updateTitlebar();
+  updatePreviewSources();
+  toast(`📱 ${phone.deviceName} connected!`, 'success');
+
+  // Set active preview source
+  if (state.phones.size === 1) {
+    // First phone: auto-select as both preview and webcam source
+    state.activePreviewSocket  = phone.socketId;
+    state.activeWebcamSourceId = phone.socketId;
+    syncCameraControls(phone);
+  } else if (!state.activePreviewSocket || !state.phones.has(state.activePreviewSocket)) {
+    // No valid active source: set to this phone
+    state.activePreviewSocket = phone.socketId;
+  }
+  // Always update dropdown after phones map is updated
+  updatePreviewSources();
+  // Sync dropdown value
+  const srcSel = document.getElementById('preview-source');
+  if (srcSel && state.activePreviewSocket) srcSel.value = state.activePreviewSocket;
+
+  // ── Auto-show stream URL immediately on phone connect ────────────────
+  // MJPEG server auto-starts on connect, so URL is immediately available
+  setTimeout(() => updateOBSCard(true, 'http://localhost:7781/stream'), 500);
+
+  // ── Reset orientation state only when this is the active preview phone ──
+  // If a second phone connects, don't reset the current preview rotation
+  if (state.phones.size <= 1 || state.activePreviewSocket === phone.socketId) {
+    state._autoRotationDone = false;
+    state._userPickedAspect = false;
+    setRotation(0, true);
+    const picker = document.getElementById('aspect-ratio-picker');
+    if (picker) picker.value = 'auto';
+    state.previewAspect = 'auto';
+    const mainWrap = document.getElementById('main-preview');
+    if (mainWrap) mainWrap.style.aspectRatio = '16/9';
+  }
+
+  // Ensure render gen is current so new frames are not discarded
+  // (in case a previous "No source" selection incremented it)
+  // We don't reset _renderGen here — instead we just un-block by
+  // ensuring activePreviewSocket is set (checked in onVideoFrame)
+
+  // Show preview canvas
+  const emptyOverlay = document.getElementById('preview-empty');
+  if (emptyOverlay) emptyOverlay.style.display = 'none';
+  const previewCanvas = document.getElementById('preview-canvas');
+  if (previewCanvas) {
+    previewCanvas.style.display   = 'block';
+    previewCanvas.style.position  = 'absolute';
+    previewCanvas.style.inset     = '0';
+    previewCanvas.style.width     = '100%';
+    previewCanvas.style.height    = '100%';
+  }
+  const hud = document.getElementById('preview-hud');
+  if (hud) hud.style.display = 'flex';
+}
+
+// When phone reports settings change, update UI dropdowns
+function handlePhoneSettingsChanged(data) {
+  // Single call syncs everything: state, _phonesMap, stat cards, HUD, dropdowns, device card
+  _syncResolutionUI(data.socketId, data.resolution, data.fps, data.quality);
+  // Also run updateDevicesList so battery/other info refreshes
+  updateDevicesList();
+}
+
+function handlePhoneDisconnected({ socketId }) {
+  if (window._phonesMap) window._phonesMap.delete(socketId);
+  const phone = state.phones.get(socketId);
+  if (phone) toast(`📵 ${phone.deviceName} disconnected`, 'info');
+
+  // ── Clean up per-phone frame buffer ──────────────────────────────────────
+  if (_pendingFrames[socketId]) {
+    delete _pendingFrames[socketId];
+  }
+
+  // ── Clear activeWebcamSourceId if this was the active webcam ─────────────
+  if (socketId === state.activeWebcamSourceId) {
+    state.activeWebcamSourceId = null;
+  }
+
+  // ── Auto-switch preview to next phone, or clear if none left ─────────────
+  if (socketId === state.activePreviewSocket) {
+    const remaining = [...state.phones.keys()].filter(id => id !== socketId);
+    if (remaining.length > 0) {
+      // Switch to next available phone seamlessly
+      state.activePreviewSocket = remaining[0];
+      const sel = document.getElementById('preview-source');
+      if (sel) sel.value = remaining[0];
+      const nextPhone = state.phones.get(remaining[0]);
+      if (nextPhone) syncCameraControls(nextPhone);
+    } else {
+      // No phones left — clear preview
+      state.activePreviewSocket = '';
+      _pendingFrame = null;
+      const canvas = document.getElementById('preview-canvas');
+      const hud    = document.getElementById('preview-hud');
+      const empty  = document.getElementById('preview-empty');
+      if (canvas) {
+        _renderGen++;
+        _pendingFrame = null;
+        canvas.style.display = 'none';
+        canvas.width = 1; canvas.height = 1;
+        const mw = document.getElementById('main-preview');
+        if (mw) mw.style.aspectRatio = '16/9';
+      }
+      if (hud)    hud.style.display   = 'none';
+      if (empty)  empty.style.display = 'flex';
+      const sel = document.getElementById('preview-source');
+      if (sel) sel.value = '';
+    }
+  }
+
+  state.phones.delete(socketId);
+  updatePhonesList();
+  updateStats();
+  updateTitlebar();
+  updatePreviewSources();
+  updateDevicesList();
+
+  // When no phones remain — reset all previews to empty state
+  if (state.phones.size === 0) {
+    _renderGen++;          // cancel any in-flight renders
+    _pendingFrame = null;  // drop queued frame
+
+    // Main preview
+    const previewCanvas = document.getElementById('preview-canvas');
+    if (previewCanvas) {
+      previewCanvas.style.display = 'none';
+      previewCanvas.width = 1; previewCanvas.height = 1;
+    }
+    const emptyOverlay = document.getElementById('preview-empty');
+    if (emptyOverlay) emptyOverlay.style.display = 'flex';
+    const hud = document.getElementById('preview-hud');
+    if (hud) hud.style.display = 'none';
+    const mainWrap = document.getElementById('main-preview');
+    if (mainWrap) mainWrap.style.aspectRatio = '16/9';
+
+    // Dashboard preview
+    const dashCanvas = document.querySelector('#dash-preview canvas');
+    if (dashCanvas) {
+      dashCanvas.style.display = 'none';
+      dashCanvas.width = 1; dashCanvas.height = 1;
+    }
+    const dashOverlay = document.querySelector('#dash-preview .preview-overlay');
+    if (dashOverlay) dashOverlay.style.display = 'flex';
+    const dashWrap = document.getElementById('dash-preview');
+    if (dashWrap) dashWrap.style.aspectRatio = '16/9';
+
+    // Reset state
+    state.activePreviewSocket  = '';
+    state.activeWebcamSourceId = null;
+    state._autoRotationDone    = false;
+    state._userPickedAspect    = false;
+
+    // Reset source dropdown
+    const sel = document.getElementById('preview-source');
+    if (sel) sel.value = '';
+  }
+}
+
+// ─── UI Updates ───────────────────────────────────────────────────────────
+function updatePhonesList() {
+  const list = document.getElementById('phones-list');
+  const devList = document.getElementById('devices-list');
+  const count = state.phones.size;
+  document.getElementById('nav-phones-count').textContent = count;
+  document.getElementById('dash-sub').textContent = count
+    ? `${count} phone${count > 1 ? 's' : ''} connected`
+    : 'no phones connected';
+
+  if (count === 0) {
+    const empty = `<div class="empty-state"><div class="empty-icon">📱</div><h3>No phones yet</h3><p>Open the PhoneCam app on your Android and scan the QR code.</p><button class="btn btn-primary" style="margin-top:8px" onclick="navigate('connect')">Connect a Phone</button></div>`;
+    list.innerHTML = empty;
+    devList.innerHTML = empty;
+    return;
+  }
+
+  list.innerHTML = '';
+  devList.innerHTML = '';
+  state.phones.forEach((phone, socketId) => {
+    const card = `
+      <div class="phone-card live" style="margin-bottom:10px">
+        <div class="phone-avatar">📱</div>
+        <div class="phone-info">
+          <div class="phone-name">${phone.deviceName}</div>
+          <div class="phone-meta">
+            <span class="phone-meta-item" id="dev-res-${phone.socketId}">🎬 ${phone.resolution ? phone.resolution.replace('x','×') : '1920×1080'}</span>
+            <span class="phone-meta-item" id="dev-fps-${phone.socketId}">⚡ ${phone.fps || 30}fps</span>
+            <span class="phone-meta-item">🔋 ${(phone.batteryLevel !== undefined && phone.batteryLevel !== null) ? phone.batteryLevel : '?'}%</span>
+          </div>
+        </div>
+        <span class="live-badge">LIVE</span>
+        <div class="phone-actions">
+          <button class="btn btn-secondary btn-sm" onclick="navigate('preview'); showPreviewForPhone('${socketId}')">Preview</button>
+          <button class="btn btn-danger btn-sm" onclick="disconnectPhone('${socketId}')">✕</button>
+        </div>
+      </div>`;
+    list.innerHTML += card;
+    devList.innerHTML += card;
+  });
+
+  // Refresh multi-device management panel
+  updateDevicesList();
+}
+
+function updateStats() {
+  const count = state.phones.size;
+  document.getElementById('stat-phones').textContent = count;
+  const firstPhone = [...state.phones.values()][0];
+  document.getElementById('stat-res').textContent = firstPhone ? firstPhone.resolution?.replace('x', '×') || '1080p' : '—';
+  if (count === 0) {
+    document.getElementById('stat-latency').textContent = '—';
+  }
+}
+
+function updateTitlebar() {
+  const count = state.phones.size;
+  const dot = document.getElementById('tb-dot');
+  const text = document.getElementById('tb-status-text');
+  if (count > 0) {
+    dot.classList.remove('inactive');
+    text.textContent = `${count} phone${count > 1 ? 's' : ''} connected`;
+  } else {
+    dot.classList.add('inactive');
+    text.textContent = 'Waiting for connection';
+  }
+}
+
+function updatePreviewSources() {
+  const sel = document.getElementById('preview-source');
+  if (!sel) return;
+
+  // Remember current selection before rebuilding
+  const currentVal = sel.value;
+
+  // Rebuild options
+  let optHtml = '<option value="">— No source —</option>';
+  state.phones.forEach((phone, id) => {
+    const isWebcam = (state.activeWebcamSourceId === id && state.vcamActive);
+    const label    = isWebcam ? `${phone.deviceName} 🟢 WEBCAM` : phone.deviceName;
+    optHtml += `<option value="${id}">${label}</option>`;
+  });
+  sel.innerHTML = optHtml;
+
+  // Re-apply selection
+  if (state.phones.size === 0) {
+    // No phones — show "No source", clear preview if not already cleared
+    sel.value = '';
+    return;
+  }
+
+  if (state.phones.size === 1) {
+    // Single phone — auto-select it
+    const firstId = state.phones.keys().next().value;
+    sel.value = firstId;
+    if (!state.activePreviewSocket || state.activePreviewSocket === '') {
+      // Only auto-switch if nothing was previously selected
+      state.activePreviewSocket = firstId;
+    }
+    return;
+  }
+
+  // Multiple phones — restore previous selection if still valid
+  if (currentVal && state.phones.has(currentVal)) {
+    sel.value = currentVal;
+  } else if (state.activePreviewSocket && state.phones.has(state.activePreviewSocket)) {
+    sel.value = state.activePreviewSocket;
+  } else {
+    sel.value = '';
+  }
+}
+
+// ─── Camera Commands ──────────────────────────────────────────────────────
+
+// Get the active phone socketId for sending commands
+function getActiveSocketId() {
+  if (state.activePreviewSocket && state.phones.has(state.activePreviewSocket))
+    return state.activePreviewSocket;
+  if (state.phones.size > 0)
+    return state.phones.keys().next().value;
+  return null;
+}
+
+function sendCameraCmd(command, value) {
+  if (state.phones.size === 0) { toast('No phone connected', 'error'); return; }
+  const socketId = getActiveSocketId();
+  if (!socketId) return;
+
+  window.phonecam.phoneCommand(socketId, command, { value });
+
+  const phone = state.phones.get(socketId);
+  if (!phone) return;
+
+  if (command === 'resolution') {
+    _syncResolutionUI(socketId, value, null, null);
+    toast('Resolution → ' + value.replace('x','×'), 'success');
+  } else if (command === 'fps') {
+    _syncResolutionUI(socketId, null, parseInt(value), null);
+    toast('Frame rate → ' + value + ' fps', 'success');
+  } else if (command === 'quality') {
+    _syncResolutionUI(socketId, null, null, parseInt(value));
+    toast('Quality → ' + value + '%', 'success');
+  }
+}
+
+// Flip front/back camera — sends command to Android which calls restartCamera()
+function flipCamera() {
+  if (state.phones.size === 0) { toast('No phone connected', 'error'); return; }
+  const socketId = getActiveSocketId();
+  if (!socketId) return;
+  const phone = state.phones.get(socketId);
+  if (!phone) return;
+  phone.frontCamera = !phone.frontCamera;
+  // Send flip_camera command — Android handles isFrontCamera toggle + restartCamera()
+  window.phonecam.phoneCommand(socketId, 'flip_camera', { value: phone.frontCamera });
+  // Update all flip buttons
+  const label = phone.frontCamera ? '🔄 Back Cam' : '🔄 Front Cam';
+  ['flip-cam-btn','flip-cam-btn2'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = id === 'flip-cam-btn2' ? (phone.frontCamera ? '🔄 Back' : '🔄 Flip') : label;
+  });
+  toast(phone.frontCamera ? '📱 Switched to front camera' : '📱 Switched to back camera', 'success');
+}
+
+// Mirror — instant CSS transform on all preview canvases
+function applyMirror(enabled) {
+  state.mirrorEnabled = enabled;
+  // Sync checkbox on camera controls panel
+  const cb = document.getElementById('ctrl-mirror');
+  if (cb) cb.checked = enabled;
+  // Sync mirror button state
+  const btn = document.getElementById('mirror-btn');
+  if (btn) {
+    btn.style.background = enabled ? 'var(--accent)'    : '';
+    btn.style.color      = enabled ? '#fff'             : '';
+    btn.textContent      = enabled ? '↔ Mirrored'       : '↔ Mirror';
+  }
+  // Bake into next canvas draw — just flag state + trigger redraw
+  _triggerRedraw();
+}
+
+function _triggerRedraw() {
+  // Redraw last frame with updated rotation/mirror settings
+  // Only if preview source is active and we have a buffered frame
+  const activeSrc = state.activePreviewSocket;
+  if (!activeSrc || activeSrc === '') return;
+
+  // Restore from per-phone buffer if _pendingFrame was cleared
+  if (!_pendingFrame && _pendingFrames[activeSrc]) {
+    _pendingFrame = _pendingFrames[activeSrc];
+  }
+
+  if (_pendingFrame && !_rafPending) {
+    _rafPending = true;
+    requestAnimationFrame(_renderFrame);
+  }
+}
+
+function _applyMirrorToCanvases(enabled) {
+  // No-op: mirror is now baked into ctx in _drawFrame
+  state.mirrorEnabled = enabled;
+  _triggerRedraw();
+}
+
+function toggleMirrorBtn() {
+  state.mirrorEnabled = !state.mirrorEnabled;
+  applyMirror(state.mirrorEnabled);
+}
+
+// ── Rotation ───────────────────────────────────────────────────────────────
+function setRotation(deg, silent = false) {
+  if (state.rotationDeg === deg) return; // no change, skip
+  state.rotationDeg = deg;
+
+  // ── Update rotation button group ──────────────────────────────────────
+  [0, 90, 180, 270].forEach(d => {
+    const btn = document.getElementById(`rot-${d}`);
+    if (!btn) return;
+    // Active = filled accent; inactive = ghost
+    btn.classList.toggle('rot-btn-active', d === deg);
+    btn.style.background = (d === deg) ? 'var(--accent)' : '';
+    btn.style.color      = (d === deg) ? '#fff'          : '';
+    btn.style.borderColor = (d === deg) ? 'var(--accent)'  : '';
+  });
+
+  // ── Sync aspect picker when user manually rotates ─────────────────────
+  if (!state._userPickedAspect) {
+    const is90   = deg === 90 || deg === 270;
+    const picker = document.getElementById('aspect-ratio-picker');
+    if (picker) {
+      const cur = picker.value;
+      let next  = cur;
+      // Flip between portrait and landscape when crossing 90° boundary
+      if      (is90  && (cur === '16/9' || cur === '4/3' || cur === '21/9')) next = '9/16';
+      else if (!is90 && cur === '9/16')                                       next = '16/9';
+      if (next !== cur) {
+        picker.value        = next;
+        state.previewAspect = next;
+        _applyAspectToWrapper(next, document.getElementById('main-preview'));
+      }
+    }
+  }
+
+  // ── Toast only on manual user change ─────────────────────────────────
+  if (!silent) {
+    const labels = { 0: 'Normal (0°)', 90: '90° Clockwise', 180: '180° Flipped', 270: '90° Counter-CW' };
+    showToast(`🔄 ${labels[deg] || deg + '°'}`, 'info');
+  }
+}
+
+// ── Apply aspect ratio to a preview wrapper element ────────────────────────
+function _applyAspectToWrapper(ratio, wrapEl) {
+  if (!wrapEl) return;
+  if (!ratio || ratio === 'auto') {
+    wrapEl.style.aspectRatio = '';
+    wrapEl.style.maxWidth    = '';
+    wrapEl.style.margin      = '0 0 20px';
+    return;
+  }
+  if (ratio === '9/16') {
+    wrapEl.style.aspectRatio = '9/16';
+    wrapEl.style.maxWidth    = '40%';
+    wrapEl.style.margin      = '0 auto 20px';
+  } else {
+    wrapEl.style.aspectRatio = ratio;
+    wrapEl.style.maxWidth    = '';
+    wrapEl.style.margin      = '0 0 20px';
+  }
+}
+
+// ── Snap frame W/H to nearest standard aspect ratio for the picker ───────────
+function _syncAspectPicker(w, h) {
+  if (!w || !h) return;
+  const ratio = w / h;
+  let best = '16/9';   // default
+
+  // Standard ratios: value → [label, threshold]
+  const standards = [
+    { val: '21/9',  r: 21/9  },
+    { val: '16/9',  r: 16/9  },
+    { val: '4/3',   r: 4/3   },
+    { val: '1/1',   r: 1/1   },
+    { val: '9/16',  r: 9/16  },
+  ];
+
+  let minDiff = Infinity;
+  standards.forEach(s => {
+    const diff = Math.abs(ratio - s.r);
+    if (diff < minDiff) { minDiff = diff; best = s.val; }
+  });
+
+  // Only update picker if not user-locked and value changed
+  const picker = document.getElementById('aspect-ratio-picker');
+  if (picker && picker.value !== best) {
+    picker.value = best;
+    state.previewAspect = best;
+  }
+}
+
+// Aspect ratio — user explicitly picking overrides auto-detection from frame
+function setAspectRatio(ratio) {
+  if (!ratio) return;
+
+  const mainWrap = document.getElementById('main-preview');
+  const canvas   = document.querySelector('#main-preview canvas');
+
+  if (ratio === 'auto') {
+    // Auto mode: clear user lock, let frame engine take over immediately
+    state._userPickedAspect = false;
+    state.previewAspect     = 'auto';
+    // Reset wrapper style so next frame auto-sets it
+    if (mainWrap) {
+      mainWrap.style.aspectRatio = '';
+      mainWrap.style.maxWidth    = '';
+      mainWrap.style.margin      = '0 0 20px';
+    }
+    showToast('Aspect: Auto', 'info', 1200);
+    return;
+  }
+
+  // User-picked a specific ratio — lock it
+  state.previewAspect     = ratio;
+  state._userPickedAspect = true;
+
+  if (!mainWrap) return;
+
+  // Parse ratio string to numbers for canvas crop calculation
+  const [rW, rH] = ratio.split('/').map(Number);
+
+  // Apply wrapper aspect ratio (controls how much space the preview takes)
+  if (ratio === '9/16') {
+    mainWrap.style.aspectRatio = '9/16';
+    mainWrap.style.maxWidth    = '40%';
+    mainWrap.style.margin      = '0 auto 20px';
+  } else {
+    mainWrap.style.aspectRatio = ratio;
+    mainWrap.style.maxWidth    = '';
+    mainWrap.style.margin      = '0 0 20px';
+  }
+
+  // Immediately repaint canvas at new aspect if we have a current frame
+  if (canvas && _pendingFrame) {
+    createImageBitmap(_pendingFrame).then(bm => {
+      // Compute canvas pixel dims that match the chosen aspect ratio
+      // Fit within the source frame dimensions (no upscale)
+      const srcW = (state.rotationDeg === 90 || state.rotationDeg === 270) ? bm.height : bm.width;
+      const srcH = (state.rotationDeg === 90 || state.rotationDeg === 270) ? bm.width  : bm.height;
+      let outW = srcW, outH = srcH;
+      const targetRatio = rW / rH;
+      const srcRatio    = srcW / srcH;
+      if (targetRatio > srcRatio) {
+        // Wider than source — fix width, shrink height
+        outH = Math.round(outW / targetRatio);
+      } else {
+        // Taller than source — fix height, shrink width
+        outW = Math.round(outH * targetRatio);
+      }
+      if (canvas.width !== outW || canvas.height !== outH) {
+        canvas.width  = outW;
+        canvas.height = outH;
+      }
+      _drawFrame(canvas, bm, state.rotationDeg, state.mirrorEnabled);
+      bm.close();
+    }).catch(() => {});
+  }
+
+  const labels = { '16/9': '16:9', '9/16': '9:16', '4/3': '4:3', '1/1': '1:1', '21/9': '21:9' };
+  showToast('Aspect: ' + (labels[ratio] || ratio), 'info', 1200);
+}
+
+// Smart vcam toggle — if multiple phones, go to My Devices to pick one
+async function smartVcamToggle() {
+  if (!state.vcamActive) {
+    if (state.phones.size > 1) {
+      // Multiple devices — let user pick which one to use as webcam
+      navigate('devices');
+      toast('Pick a device to use as webcam, then click "Preview →"', 'info');
+      return;
+    }
+    if (state.phones.size === 0) {
+      toast('Connect a phone first', 'error');
+      return;
+    }
+  }
+  await toggleVcam();
+}
+
+// Sync camera control UI to match phone's current settings
+function syncCameraControls(phone) {
+  const resEl = document.getElementById('ctrl-resolution');
+  const fpsEl = document.getElementById('ctrl-fps');
+  if (resEl && phone.resolution) resEl.value = phone.resolution;
+  if (fpsEl && phone.fps)        fpsEl.value = String(phone.fps);
+}
+
+function switchPreviewSource(socketId) {
+  state.activePreviewSocket = socketId || '';
+  state.activePreviewId     = socketId || '';
+
+  const canvas       = document.getElementById('preview-canvas');
+  const dashCanvas   = document.querySelector('#dash-preview canvas');
+  const mainWrap     = document.getElementById('main-preview');
+  const hud          = document.getElementById('preview-hud');
+  const emptyOverlay = document.getElementById('preview-empty');
+  const sel          = document.getElementById('preview-source');
+
+  if (!socketId || socketId === '') {
+    // ── "No source" — kill all in-flight renders then clear ─────────────────
+    _renderGen++;        // invalidates any createImageBitmap promises in flight
+    _pendingFrame = null; // drop queued frame
+    _rafPending   = false;
+
+    // Clear both canvases to solid black and hide them
+    [canvas, dashCanvas].forEach(c => {
+      if (!c) return;
+      c.style.display = 'none';
+      // Reset pixel buffer to 1×1 to free memory
+      c.width  = 1;
+      c.height = 1;
+    });
+
+    // Reset main-preview wrapper to neutral 16/9
+    if (mainWrap) mainWrap.style.aspectRatio = '16/9';
+
+    if (hud)          hud.style.display = 'none';
+    if (emptyOverlay) {
+      emptyOverlay.style.display = 'flex';
+      const span = emptyOverlay.querySelector('span');
+      if (span) span.textContent = 'Select a source above to see the live feed';
+    }
+
+    // Reset HUD stats
+    ['hud-res','hud-fps','hud-latency'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = id === 'hud-res' ? '—' : id === 'hud-fps' ? '—fps' : '—ms';
+    });
+    ['stat-resolution','stat-latency'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.textContent = '—';
+    });
+
+    // Reset auto-rotation so first frame of next phone triggers it fresh
+    state._autoRotationDone = false;
+    state._userPickedAspect = false;
+    return;
+  }
+
+  // ── Valid source selected ─────────────────────────────────────────────────
+  if (emptyOverlay) emptyOverlay.style.display = 'none';
+  if (hud)          hud.style.display = 'flex';
+  if (canvas) {
+    canvas.style.display = 'block';
+    canvas.style.position = 'absolute';
+    canvas.style.inset    = '0';
+    canvas.style.width    = '100%';
+    canvas.style.height   = '100%';
+  }
+
+  // Reset auto-rotation for this new source
+  state._autoRotationDone = false;
+  state._userPickedAspect = false;
+
+  // Restore last frame from this phone's buffer so preview resumes instantly
+  const blob = _pendingFrames[socketId];
+  if (blob) {
+    _pendingFrame = blob;
+    if (!_rafPending) {
+      _rafPending = true;
+      requestAnimationFrame(_renderFrame);
+    }
+  }
+
+  // Sync controls to this device's settings
+  const phone = state.phones.get(socketId);
+  if (phone) syncCameraControls(phone);
+}
+
+function showPreviewForPhone(socketId) {
+  // Unified: delegate to switchPreviewSource which handles all state + canvas
+  switchPreviewSource(socketId);
+  const sel = document.getElementById('preview-source');
+  if (sel) sel.value = socketId || '';
+}
+
+function disconnectPhone(socketId) {
+  const phone = state.phones.get(socketId);
+  const name  = phone?.deviceName || 'device';
+  window.phonecam.phoneDisconnect(socketId)
+    .then(() => toast(`${name} disconnected`, 'info'))
+    .catch(e  => toast(`Disconnect failed: ${e.message}`, 'error'));
+}
+
+function toggleFullscreen() {
+  const el = document.getElementById('main-preview');
+  if (document.fullscreenElement) document.exitFullscreen();
+  else el.requestFullscreen?.();
+}
+
+// ─── Setup Wizard ─────────────────────────────────────────────────────────
+
+let setupStatus = null;
+
+async function setupCheckStatus() {
+  const steps = document.getElementById('setup-steps-container');
+  const badge = document.getElementById('setup-ready-badge');
+  if (steps) steps.innerHTML = '<div style="color:var(--text2);font-size:13px;padding:8px">Checking your system…</div>';
+  if (badge) { badge.textContent = 'Checking…'; badge.style.background = 'var(--bg3)'; badge.style.color = 'var(--text2)'; }
+  try {
+    setupStatus = await window.phonecam.invoke('setup-get-status');
+    renderSetupStatus(setupStatus);
+    if (setupStatus.platform === 'win32') {
+      refreshNativeDriverBanner(setupStatus.nativeDriverInstalled);
+    }
+  } catch(e) {
+    if (steps) steps.innerHTML = `<div class="card" style="color:var(--accent-r)">Error: ${e.message}</div>`;
+  }
+}
+
+// ── Native Driver Banner ──────────────────────────────────────────────────────
+// Apply driver installed/uninstalled state to OS badge and steps — no IPC round-trip
+function _applyDriverStatusToSetupBadge(installed) {
+  const badge = document.getElementById('setup-ready-badge');
+  if (badge) {
+    if (installed) {
+      badge.textContent      = '✅ Ready to stream';
+      badge.style.background = 'rgba(22,199,132,.15)';
+      badge.style.color      = 'var(--accent-g)';
+    } else {
+      badge.textContent      = '⚠ Setup required';
+      badge.style.background = 'rgba(245,166,35,.12)';
+      badge.style.color      = '#F5A623';
+    }
+  }
+  // Update the native driver step card state
+  const stepCard = document.getElementById('setup-step-native-driver');
+  if (stepCard) {
+    const dot  = stepCard.querySelector('.step-status-dot, .step-dot');
+    const lbl  = stepCard.querySelector('.step-status-label, .step-label');
+    if (dot) dot.style.background = installed ? 'var(--accent-g)' : 'var(--accent-r, #ff4d4f)';
+    if (lbl) lbl.textContent      = installed ? 'Installed ✓' : 'Not installed';
+  }
+}
+
+// refreshNativeDriverBanner — handles 3 states:
+//   installed=true                          → STATE C (green, uninstall btn)
+//   installed=false, installerPresent=true  → STATE B (blue, install btn)
+//   installed=false, installerPresent=false → STATE A (yellow, coming soon)
+function refreshNativeDriverBanner(installed) {
+  const banner = document.getElementById('native-driver-banner');
+  if (!banner) return;
+  banner.style.display = 'block';
+
+  const stateNotInstalled = document.getElementById('driver-state-not-installed');
+  const stateInstalled    = document.getElementById('driver-state-installed');
+
+  if (installed) {
+    if (stateNotInstalled) stateNotInstalled.style.display = 'none';
+    if (stateInstalled)    stateInstalled.style.display    = 'block';
+    updateNativeDriverCard(true);
+  } else {
+    if (stateInstalled)    stateInstalled.style.display    = 'none';
+    if (stateNotInstalled) stateNotInstalled.style.display = 'block';
+    updateNativeDriverCard(false);
+  }
+}
+
+// Open driver download page on user's browser
+function openDriverDownload() {
+  window.phonecam.openExternal('https://github.com/Sudo0xSajal/PhonecamConnect.git/tree/main/driver/README.md');
+}
+
+function updateDriverPipeStatus(data) {
+  const pipeDot  = document.getElementById('pipe-dot');
+  const pipeText = document.getElementById('pipe-status-text');
+  const pipeRow  = document.getElementById('driver-pipe-status');
+  if (!pipeDot) return;
+  if (data.driverConnected || data.mode === 'native') {
+    if (pipeRow)  pipeRow.style.display = 'flex';
+    pipeDot.style.background = 'var(--accent-g)';
+    if (pipeText) pipeText.textContent = '✅ Driver connected — streaming live';
+  } else if (data.driverInstalled) {
+    if (pipeRow)  pipeRow.style.display = 'flex';
+    pipeDot.style.background = 'var(--accent-y)';
+    if (pipeText) pipeText.textContent = 'Driver installed — waiting for stream';
+  }
+}
+
+function updateNativeDriverCard(installed) {
+  const container = document.getElementById('native-driver-steps');
+  const label     = document.getElementById('altcam-label');
+  if (!container) return;
+  if (installed) {
+    if (label) { label.style.color = 'var(--accent-g)'; label.textContent = '✅ Native Driver — No OBS Needed'; }
+    container.innerHTML = `
+      <div><span style="color:var(--text3);font-weight:600;min-width:18px;display:inline-block">1.</span> Click <strong style="color:var(--text)">Start Webcam</strong> button above</div>
+      <div><span style="color:var(--text3);font-weight:600;min-width:18px;display:inline-block">2.</span> Open Zoom / Meet / Teams → Settings → Camera</div>
+      <div><span style="color:var(--text3);font-weight:600;min-width:18px;display:inline-block">3.</span> Select <strong style="color:var(--accent)">PhoneCam Connect</strong></div>
+      <div><span style="color:var(--text3);font-weight:600;min-width:18px;display:inline-block">4.</span> Done — no OBS required ✅</div>`;
+  } else {
+    if (label) { label.style.color = 'var(--text3)'; label.textContent = 'Virtual Camera (install driver first)'; }
+    container.innerHTML = `<div style="color:var(--text3);font-size:12.5px;line-height:1.7">
+      Install the <strong style="color:var(--text)">PhoneCam Native Driver</strong> on the Setup page for direct Zoom/Meet/Teams integration.
+      <br><span style="color:var(--accent-y)">Or use the MJPEG Stream URL in OBS Browser Source (always works).</span></div>`;
+  }
+}
+
+
+function setupInstallDriver() {
+  // Install is done from website — redirect there
+  openDriverDownload();
+}
+
+// Reinstall = uninstall then install (fixes corrupt/broken driver state)
+async function setupReinstallDriver() {
+  if (!confirm('Reinstall PhoneCam driver?\n\nThis will remove and reinstall the driver to fix any issues.')) return;
+
+  const btn     = document.getElementById('driver-reinstall-btn');
+  const logCard = document.getElementById('setup-log-card');
+  const log     = document.getElementById('setup-log');
+
+  if (btn)     { btn.disabled = true; btn.textContent = '⏳ Reinstalling…'; }
+  if (logCard) logCard.style.display = 'block';
+  if (log)     log.textContent = '';
+
+  try {
+    // Step 1: Uninstall first
+    await window.phonecam.driverUninstall();
+    // Small delay so file system releases DLL lock before installing again
+    await new Promise(r => setTimeout(r, 1500));
+    // Step 2: Fresh install
+    const result = await window.phonecam.driverInstall();
+    if (result.driverInstalled || result.alreadyInstalled) {
+      toast('Driver reinstalled successfully.', 'success', 4000);
+    } else {
+      toast('Reinstall failed — see log below.', 'error', 6000);
+    }
+  } catch(e) {
+    toast('Reinstall error: ' + e.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '↺ Reinstall'; }
+  }
+}
+
+async function setupUninstallDriver() {
+  if (!confirm('Uninstall PhoneCam driver?\n\n"PhoneCam Connect" will be removed from all Windows camera pickers.')) return;
+
+  const btn     = document.getElementById('driver-uninstall-btn');
+  const logCard = document.getElementById('setup-log-card');
+  const log     = document.getElementById('setup-log');
+
+  if (log)     log.textContent = '';       // clear before new operation
+  if (logCard) logCard.style.display = 'block';
+  if (btn)     { btn.disabled = true; btn.textContent = '⏳ Uninstalling…'; }
+
+  try {
+    // This awaits until main.js finishes force-deleting registry keys
+    // and fires driver-status-changed — then UI syncs automatically
+    const result = await window.phonecam.driverUninstall();
+
+    if (result.requiresRestart) {
+      toast('Driver removed — restart your PC to fully clear from camera pickers.', 'info', 6000);
+    } else {
+      toast('Driver uninstalled successfully.', 'success', 4000);
+    }
+  } catch(e) {
+    toast('Uninstall error: ' + e.message, 'error');
+  } finally {
+    // Always re-enable button
+    if (btn) { btn.disabled = false; btn.textContent = 'Uninstall'; }
+  }
+}
+
+function renderSetupStatus(s) {
+  const icons = { linux: '🐧', win32: '🪟', darwin: '🍎' };
+  const names = { linux: 'Linux', win32: 'Windows', darwin: 'macOS' };
+  const descs = {
+    linux:  'Uses v4l2loopback kernel module + FFmpeg — no code signing needed',
+    win32:  'Native DirectShow driver (recommended) or MJPEG via OBS Browser Source',
+    darwin: 'Uses OBS Studio Virtual Camera + FFmpeg — requires Homebrew',
+  };
+  document.getElementById('setup-os-icon').textContent = icons[s.platform] || '💻';
+  document.getElementById('setup-os-name').textContent = names[s.platform] || s.platform;
+  document.getElementById('setup-os-desc').textContent = descs[s.platform] || '';
+
+  const badge = document.getElementById('setup-ready-badge');
+  if (s.ready) {
+    badge.textContent = '✅ Ready to stream';
+    badge.style.background = 'rgba(22,199,132,.15)'; badge.style.color = 'var(--accent-g)';
+  } else {
+    badge.textContent = '⚠ Setup required';
+    badge.style.background = 'rgba(245,166,35,.12)'; badge.style.color = '#F5A623';
+  }
+
+  // Render steps — filter out native-driver (has its own banner)
+  const container = document.getElementById('setup-steps-container');
+  container.innerHTML = '';
+  const filteredSteps = (s.steps || []).filter(st => st.id !== 'native-driver');
+
+  if (filteredSteps.length === 0 && s.platform === 'win32') {
+    const g = document.createElement('div');
+    g.className = 'card'; g.style.cssText = 'padding:16px 20px';
+    g.innerHTML = '<div style="font-size:13.5px;color:var(--text2);line-height:1.8">On Windows, install the <strong style="color:var(--text)">PhoneCam Native Driver</strong> above for the best experience.<br>Optionally install FFmpeg and OBS for the MJPEG Browser Source workflow.</div>';
+    container.appendChild(g);
+  }
+
+  filteredSteps.forEach(step => {
+    const card = document.createElement('div');
+    card.className = 'card'; card.id = 'setup-step-' + step.id;
+    card.style.cssText = 'display:flex;align-items:center;gap:16px;padding:16px 20px';
+    card.innerHTML = `
+      <div style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:${step.done ? 'rgba(22,199,132,.15)' : 'rgba(245,166,35,.1)'}">${step.done ? '✅' : '⚙️'}</div>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:600;color:var(--text)">${step.label}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px;font-family:var(--mono)">${step.install}</div>
+        ${step.description ? '<div style="font-size:12px;color:var(--text3);margin-top:4px">' + step.description + '</div>' : ''}
+      </div>
+      <div style="display:flex;gap:8px">
+        ${step.done
+          ? '<div style="font-size:13px;padding:5px 12px;border-radius:8px;background:rgba(22,199,132,.15);color:var(--accent-g);font-weight:600">Installed ✓</div>'
+          : '<button class="btn btn-secondary btn-sm" onclick="setupCopyCmd(\'' + step.install.replace(/'/g, "\\'").replace(/"/g, '&quot;') + '\')">Copy</button><button class="btn btn-primary btn-sm" onclick="setupRunStep(\'' + step.id + '\',\'' + step.install.replace(/'/g, "\\'").replace(/"/g, '&quot;') + '\')">Auto Install</button>'
+        }
+      </div>`;
+    container.appendChild(card);
+  });
+
+  renderHowTo(s);
+  // setup-log listener is registered once in init() — not here
+}
+
+async function setupRunStep(stepId, installCmd) {
+  const card = document.getElementById('setup-step-' + stepId);
+  if (card) { const btn = card.querySelector('button.btn-primary'); if (btn) { btn.textContent = 'Installing…'; btn.disabled = true; } }
+  document.getElementById('setup-log-card').style.display = 'block';
+  document.getElementById('setup-log').textContent += '\n▶ Installing ' + stepId + '...\n';
+  try {
+    const result = await window.phonecam.invoke('setup-run-step', { stepId, installCmd });
+    if (result.success) {
+      document.getElementById('setup-log').textContent += '✅ ' + stepId + ' installed\n';
+      setTimeout(setupCheckStatus, 1000);
+    } else {
+      document.getElementById('setup-log').textContent += '❌ Failed (code ' + result.code + '): ' + (result.error || result.stderr || '') + '\nTry running command manually in a terminal with admin/sudo.\n';
+      window.phonecam.invoke('setup-open-terminal', installCmd);
+    }
+  } catch(e) {
+    document.getElementById('setup-log').textContent += '❌ Error: ' + e.message + '\n';
+  }
+}
+
+function setupCopyCmd(cmd) {
+  navigator.clipboard.writeText(cmd).then(() => showToast('Command copied'));
+}
+
+function renderHowTo(s) {
+  const howto   = document.getElementById('setup-howto');
+  const content = document.getElementById('setup-howto-content');
+  if (!howto) return;
+  const nativeInstalled = s.nativeDriverInstalled;
+  const stepsMap = {
+    win32_native: [
+      { n:'1', text:'Click <strong>Start Webcam</strong> on the Dashboard' },
+      { n:'2', text:'Open Zoom / Meet / Teams → Settings → Video → Camera' },
+      { n:'3', text:'Select <strong style="color:var(--accent)">PhoneCam Connect</strong> — no OBS needed' },
+      { n:'4', text:'🎉 Your phone camera is live!' },
+    ],
+    win32_obs: [
+      { n:'1', text:'Click <strong>Start Webcam</strong> button on the Dashboard' },
+      { n:'2', text:'In OBS Sources → Add → <strong>Browser Source</strong> → paste the Stream URL' },
+      { n:'3', text:'Open Zoom / Meet → Camera → <strong>OBS Virtual Camera</strong>' },
+      { n:'4', text:'🎉 Your phone camera now appears as a webcam in every app!' },
+    ],
+    linux: [
+      { n:'1', text:'Click <strong>Start Webcam</strong> — FFmpeg pipes to <code>/dev/video10</code>' },
+      { n:'2', text:'In Zoom / Meet → Camera → <strong>PhoneCam</strong> or <strong>video10</strong>' },
+      { n:'3', text:'🎉 Streaming live as a Linux webcam!' },
+    ],
+    darwin: [
+      { n:'1', text:'Open OBS → click <strong>Start Virtual Camera</strong>' },
+      { n:'2', text:'Click <strong>Start Webcam</strong> in PhoneCam' },
+      { n:'3', text:'In Zoom / Meet → Camera → <strong>OBS Virtual Camera</strong>' },
+      { n:'4', text:'🎉 Live on macOS!' },
+    ],
+  };
+  let list;
+  if (s.platform === 'win32') { list = nativeInstalled ? stepsMap.win32_native : stepsMap.win32_obs; howto.style.display = 'block'; }
+  else if (s.platform === 'linux' && s.ready) { list = stepsMap.linux; howto.style.display = 'block'; }
+  else if (s.platform === 'darwin' && s.ready) { list = stepsMap.darwin; howto.style.display = 'block'; }
+  else { howto.style.display = 'none'; return; }
+  content.innerHTML = list.map(step => `
+    <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">${step.n}</div>
+      <div style="font-size:13px;color:var(--text);line-height:1.5">${step.text}</div>
+    </div>`).join('');
+}
+
+
+// ─── Multi-Device Management ──────────────────────────────────────────────
+
+// All preview state is now initialized in the state object above.
+
+function buildDeviceCard(phone, socketId) {
+  const res = phone.resolution ? phone.resolution.replace('x','×') : '1920×1080';
+  const bat = phone.batteryLevel != null ? phone.batteryLevel : '?';
+  const batColor = bat > 50 ? 'var(--accent-g)' : bat > 20 ? '#F5A623' : 'var(--accent-r)';
+  const isActive = state.activePreviewSocket === socketId;
+
+  return `
+  <div class="card device-mgmt-card" id="dcard-${socketId}" style="padding:0;overflow:hidden;border:2px solid ${isActive ? 'var(--accent)' : 'var(--border)'}">
+    <!-- Mini preview -->
+    <div class="device-preview-wrap" id="dpreview-${socketId}" onclick="setActivePreview('${socketId}')">
+      <canvas class="device-mini-canvas" data-socket-id="${socketId}"></canvas>
+      <div class="preview-overlay" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:rgba(0,0,0,.7)">
+        <div style="font-size:28px">📱</div>
+        <span style="font-size:11px;color:var(--text2)">Waiting for frames…</span>
+      </div>
+      ${isActive ? '<div style="position:absolute;top:8px;right:8px;background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px">ACTIVE</div>' : ''}
+      <div style="position:absolute;top:8px;left:8px;display:flex;gap:6px">
+        <div style="background:rgba(22,199,132,.2);border:1px solid var(--accent-g);padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;color:var(--accent-g)">● LIVE</div>
+      </div>
+    </div>
+    <!-- Info & controls -->
+    <div style="padding:14px 16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div>
+          <div style="font-size:14px;font-weight:700;color:var(--text)">${phone.deviceName || 'Android Phone'}</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px">${res} &nbsp;•&nbsp; ${phone.fps||30} fps &nbsp;•&nbsp; <span style="color:${batColor}">🔋 ${bat}%</span></div>
+        </div>
+        <button onclick="disconnectPhone('${socketId}')" style="width:26px;height:26px;border-radius:50%;background:rgba(234,57,67,.15);border:1px solid rgba(234,57,67,.3);color:var(--accent-r);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center">✕</button>
+      </div>
+      <!-- Per-device controls -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <select class="select-field" data-res-sync="true" style="font-size:12px" onchange="sendDeviceCmd('${socketId}','resolution',this.value)">
+          <option value="1920x1080" ${phone.resolution==='1920x1080'?'selected':''}>1080p</option>
+          <option value="1280x720"  ${phone.resolution==='1280x720'?'selected':''}>720p</option>
+          <option value="3840x2160" ${phone.resolution==='3840x2160'?'selected':''}>4K</option>
+          <option value="640x480"   ${phone.resolution==='640x480'?'selected':''}>480p</option>
+        </select>
+        <select class="select-field" style="font-size:12px" onchange="sendDeviceCmd('${socketId}','fps',this.value)">
+          <option value="30" ${(phone.fps||30)==30?'selected':''}>30 fps</option>
+          <option value="60" ${phone.fps==60?'selected':''}>60 fps</option>
+          <option value="15" ${phone.fps==15?'selected':''}>15 fps</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-secondary btn-sm" onclick="toggleDeviceTorch('${socketId}')" id="torch-${socketId}">🔦 Torch</button>
+        <button class="btn btn-secondary btn-sm" onclick="toggleDeviceOrientation('${socketId}')" id="orient-${socketId}" title="Toggle portrait/landscape preview">⬜ Landscape</button>
+        <button class="btn btn-secondary btn-sm" onclick="setActivePreview('${socketId}');navigate('preview')">👁 Preview</button>
+        ${state.activeWebcamSourceId === socketId && state.vcamActive
+          ? `<div id="usewebcam-${socketId}" style="margin-left:auto;display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:8px;background:rgba(22,199,132,.15);border:1px solid rgba(22,199,132,.4);font-size:12px;font-weight:700;color:#16C784">
+               <span style="width:7px;height:7px;border-radius:50%;background:#16C784;animation:pulse-g 1.5s infinite"></span>
+               ACTIVE WEBCAM
+             </div>`
+          : `<button class="btn btn-primary btn-sm" id="usewebcam-${socketId}" onclick="useDeviceAsWebcam('${socketId}')"
+               style="margin-left:auto">📹 Use as Webcam</button>
+             <button class="btn btn-secondary btn-sm" onclick="openQualitySettings('${socketId}')"
+               style="padding:5px 10px" title="Camera quality settings">⚙</button>`
+        }
+      </div>
+    </div>
+  </div>`;
+}
+
+function setActivePreview(socketId) {
+  state.activePreviewSocket = socketId;
+  // Update source dropdown on preview page
+  const sel = document.getElementById('preview-source');
+  if (sel) sel.value = socketId;
+  // Refresh cards to show ACTIVE badge
+  updateDevicesList();
+}
+
+function updateDevicesList() {
+  const list  = document.getElementById('devices-list');
+  const devSub = document.getElementById('devices-sub');
+  const globalBar = document.getElementById('devices-global-bar');
+  const count = state.phones.size;
+
+  if (devSub) devSub.textContent = count
+    ? `${count} device${count>1?'s':''} connected — click a preview to set active`
+    : 'No phones connected';
+
+  if (!list) return;
+
+  if (count === 0) {
+    list.style.display = 'block';
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">📱</div><h3>No devices connected</h3><p>Open the PhoneCam app and scan the QR code to connect.</p><button class="btn btn-primary" style="margin-top:8px" onclick="navigate('connect')">Connect a Phone</button></div>`;
+    if (globalBar) globalBar.style.display = 'none';
+    return;
+  }
+
+  list.style.display = 'grid';
+  if (globalBar) globalBar.style.display = count > 1 ? 'block' : 'none';
+
+  // Set first device as active if none selected
+  if (!state.activePreviewSocket || !state.phones.has(state.activePreviewSocket)) {
+    state.activePreviewSocket = state.phones.keys().next().value;
+  }
+
+  list.innerHTML = '';
+  state.phones.forEach((phone, socketId) => {
+    list.innerHTML += buildDeviceCard(phone, socketId);
+  });
+}
+
+function sendDeviceCmd(socketId, command, value) {
+  window.phonecam.phoneCommand(socketId, command, { value })
+    .catch(e => console.warn('[CMD] failed:', e));
+
+  const phone = state.phones.get(socketId);
+  if (!phone) return;
+
+  if (command === 'resolution') {
+    _syncResolutionUI(socketId, value, null, null);
+    toast((phone.deviceName || 'Phone') + ': resolution → ' + value.replace('x','×'), 'success');
+  } else if (command === 'fps') {
+    _syncResolutionUI(socketId, null, parseInt(value), null);
+    toast((phone.deviceName || 'Phone') + ': fps → ' + value, 'success');
+  } else if (command === 'quality') {
+    _syncResolutionUI(socketId, null, null, parseInt(value));
+    toast((phone.deviceName || 'Phone') + ': quality → ' + value + '%', 'success');
+  }
+}
+
+function toggleDeviceTorch(socketId) {
+  const phone = state.phones.get(socketId);
+  if (!phone) return;
+  phone.torchOn = !phone.torchOn;
+  const btn = document.getElementById(`torch-${socketId}`);
+  if (btn) {
+    btn.style.opacity = phone.torchOn ? '1' : '0.5';
+    btn.style.background = phone.torchOn ? 'rgba(245,166,35,.2)' : '';
+    btn.style.borderColor = phone.torchOn ? '#F5A623' : '';
+    btn.textContent = phone.torchOn ? '🔦 On' : '🔦 Torch';
+  }
+  sendDeviceCmd(socketId, 'torch', phone.torchOn);
+}
+
+function toggleDeviceOrientation(socketId) {
+  const phone = state.phones.get(socketId);
+  if (!phone) return;
+  phone.portrait = !phone.portrait;
+
+  // Flip the preview wrap height/aspect
+  const wrap = document.getElementById(`dpreview-${socketId}`);
+  const card = document.getElementById(`dcard-${socketId}`);
+  const btn  = document.getElementById(`orient-${socketId}`);
+
+  if (phone.portrait) {
+    // Portrait: tall card
+    if (wrap) { wrap.style.height = ''; wrap.style.aspectRatio = '9/16'; }
+    if (btn)  { btn.textContent = '📱 Portrait'; btn.style.background = 'rgba(27,111,235,.2)'; btn.style.borderColor = 'var(--accent)'; }
+    if (card) card.style.maxWidth = '240px';
+  } else {
+    // Landscape: normal
+    if (wrap) { wrap.style.height = ''; wrap.style.aspectRatio = '4/3'; }
+    if (btn)  { btn.textContent = '⬜ Landscape'; btn.style.background = ''; btn.style.borderColor = ''; }
+    if (card) card.style.maxWidth = '';
+  }
+  state.phones.set(socketId, phone);
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MASTER RESOLUTION SYNC — call this from ANYWHERE resolution changes
+// Syncs: state.phones, _phonesMap, stat cards, HUD, both dropdowns,
+//        device card subtitle, quality modal (if open)
+// ═══════════════════════════════════════════════════════════════════════════
+function _syncResolutionUI(socketId, resolution, fps, quality) {
+  if (!socketId) return;
+
+  // 1. Update state.phones (master store)
+  const phone = state.phones.get(socketId);
+  if (phone) {
+    if (resolution) phone.resolution = resolution;
+    if (fps != null) phone.fps = parseInt(fps);
+    if (quality != null) phone.quality = parseInt(quality);
+    state.phones.set(socketId, phone);
+  }
+
+  // 2. Update _phonesMap (for quality modal)
+  if (!window._phonesMap) window._phonesMap = new Map();
+  const pmap = window._phonesMap.get(socketId) || {};
+  if (resolution) pmap.resolution = resolution;
+  if (fps != null) pmap.fps = parseInt(fps);
+  if (quality != null) pmap.quality = parseInt(quality);
+  window._phonesMap.set(socketId, { ...pmap });
+
+  // Only sync visual elements if this is the active phone
+  const isActive = socketId === state.activePreviewSocket ||
+                   socketId === state.activeWebcamSourceId;
+  if (!isActive) {
+    // Still refresh device card subtitle for this phone
+    _updateDeviceCardSubtitle(socketId, resolution, fps);
+    return;
+  }
+
+  const resStr  = resolution || (phone && phone.resolution) || '1920x1080';
+  const fpsNum  = parseInt(fps || (phone && phone.fps) || 30);
+  const resDisp = resStr.replace('x','×');
+  const resLabel = _resLabel(resStr);
+
+  // 3. Stat card resolution
+  const statRes = document.getElementById('stat-resolution') || document.getElementById('stat-res');
+  if (statRes) statRes.textContent = resDisp;
+
+  // 4. HUD pill
+  const hudRes = document.getElementById('hud-res');
+  if (hudRes) hudRes.textContent = resLabel;
+
+  // 5. ctrl-resolution dropdown (Live Preview panel)
+  const ctrlRes = document.getElementById('ctrl-resolution');
+  if (ctrlRes) ctrlRes.value = resStr;
+
+  // 6. ctrl-fps dropdown (Live Preview panel)
+  const ctrlFps = document.getElementById('ctrl-fps');
+  if (ctrlFps) ctrlFps.value = String(fpsNum);
+
+  // 7. All other resolution dropdowns on the page
+  document.querySelectorAll('select[data-res-sync]').forEach(el => {
+    el.value = resStr;
+  });
+
+  // 8. Device card subtitle (resolution badge)
+  _updateDeviceCardSubtitle(socketId, resStr, fpsNum);
+
+  // 9. If quality modal is currently open for this phone, update slider
+  if (_qualitySocketId === socketId) {
+    const slider = document.getElementById('quality-slider');
+    const valEl  = document.getElementById('quality-val');
+    if (slider && quality != null) { slider.value = quality; }
+    if (valEl  && quality != null) { valEl.textContent = quality; }
+    // Update res/fps button highlights
+    if (resolution) {
+      document.querySelectorAll('.res-btn').forEach(b => {
+        const active = b.dataset.res === resolution;
+        b.style.borderColor = active ? 'var(--accent)' : 'var(--border)';
+        b.style.background  = active ? 'rgba(27,111,235,.12)' : 'var(--bg2)';
+        b.style.color       = active ? 'var(--accent)' : 'var(--text2)';
+        b.textContent = b.textContent.replace(' ✓','') + (active ? ' ✓' : '');
+      });
+    }
+    if (fps != null) {
+      document.querySelectorAll('.fps-btn').forEach(b => {
+        const active = parseInt(b.dataset.fps) === fpsNum;
+        b.style.borderColor = active ? 'var(--accent)' : 'var(--border)';
+        b.style.background  = active ? 'rgba(27,111,235,.12)' : 'var(--bg2)';
+        b.style.color       = active ? 'var(--accent)' : 'var(--text2)';
+        b.textContent = b.textContent.replace(' ✓','') + (active ? ' ✓' : '');
+      });
+    }
+    updateQualityHint();
+  }
+}
+
+// Convert resolution string to display label
+function _resLabel(res) {
+  const map = {
+    '3840x2160': '4K', '2560x1440': '1440p',
+    '1920x1080': '1080p', '1280x720': '720p',
+    '854x480': '480p', '640x480': '480p', '640x360': '360p',
+  };
+  return map[res] || (res ? res.replace('x','×') : '1080p');
+}
+
+// Update device card subtitle badge for a specific phone
+function _updateDeviceCardSubtitle(socketId, resolution, fps) {
+  const badge = document.getElementById('dev-res-' + socketId);
+  if (badge && resolution) badge.textContent = '🎬 ' + resolution.replace('x','×');
+  const fpsBadge = document.getElementById('dev-fps-' + socketId);
+  if (fpsBadge && fps) fpsBadge.textContent = '⚡ ' + fps + 'fps';
+}
+
+function broadcastSetting(command, value) {
+  state.phones.forEach((_, socketId) => sendDeviceCmd(socketId, command, value));
+  toast(`${command} → ${value} on all devices`, 'success');
+}
+
+function broadcastToAll(command, value) {
+  state.phones.forEach((phone, socketId) => {
+    if (command === 'torch') {
+      phone.torchOn = value === 'on' || (value === 'toggle' ? !phone.torchOn : false);
+      sendDeviceCmd(socketId, 'torch', phone.torchOn);
+    } else {
+      sendDeviceCmd(socketId, command, value);
+    }
+  });
+  toast(`${command} applied to all devices`, 'success');
+}
+
+function disconnectAll() {
+  if (!confirm(`Disconnect all ${state.phones.size} devices?`)) return;
+  state.phones.forEach((_, socketId) => {
+    window.phonecam.phoneDisconnect(socketId).catch(()=>{});
+  });
+}
+
+function useDeviceAsWebcam(socketId) {
+  const phone = state.phones.get(socketId);
+  if (!phone) { showToast('Device not found', 'error'); return; }
+
+  const res = phone.resolution || '1920x1080';
+  const fps = phone.fps || 30;
+
+  // Visual feedback — mark button as loading
+  const btn = document.getElementById(`usewebcam-${socketId}`);
+  if (btn) { btn.textContent = '⏳ Switching…'; btn.disabled = true; }
+
+  // Call use-as-webcam IPC — sets source AND starts vcam if needed
+  window.phonecam.invoke('use-as-webcam', { socketId, resolution: res, fps })
+    .then(r => {
+      if (r?.success) {
+        // Update state
+        state.activePreviewSocket   = socketId;
+        state.activeWebcamSourceId  = socketId;
+        state.vcamActive            = r.active;
+
+        // Sync preview source dropdown
+        const sel = document.getElementById('preview-source');
+        if (sel) sel.value = socketId;
+
+        // Restore canvas if it was hidden
+        const canvas = document.getElementById('preview-canvas');
+        const hud    = document.getElementById('preview-hud');
+        const empty  = document.getElementById('preview-empty');
+        if (canvas) canvas.style.display = 'block';
+        if (hud)    hud.style.display    = 'flex';
+        if (empty)  empty.style.display  = 'none';
+
+        // Restore frame from buffer
+        if (_pendingFrames[socketId]) {
+          _pendingFrame = _pendingFrames[socketId];
+          if (typeof _rafPending !== 'undefined' && !_rafPending) {
+            _rafPending = true;
+            requestAnimationFrame(_renderFrame);
+          }
+        }
+
+        syncCameraControls(phone);
+        updateVcamUI();
+        updateDevicesList(); // refresh ACTIVE badge on device cards
+
+        showToast(`📹 ${phone.deviceName} is now your webcam!`, 'success');
+      } else {
+        showToast('Failed to switch webcam source', 'error');
+      }
+    })
+    .catch(e => showToast('Error: ' + e.message, 'error'))
+    .finally(() => {
+      if (btn) {
+        btn.textContent = '📹 Use as Webcam';
+        btn.disabled    = false;
+      }
+    });
+}
+
+// showToast = alias for toast (single implementation above at line ~1843)
+function showToast(msg, type, duration) { toast(msg, type || 'info', duration || 3000); }
+
+// ─── Real Uptime Timer (metrics come from actual frame data) ──────────────
+let uptimeInterval = null;
+function startUptimeTimer() {
+  if (uptimeInterval) return;
+  uptimeInterval = setInterval(() => {
+    const secs = Math.floor((Date.now() - state.sessionStart) / 1000);
+    const h = Math.floor(secs / 3600).toString().padStart(2, '0');
+    const m = Math.floor((secs % 3600) / 60).toString().padStart(2, '0');
+    const s = (secs % 60).toString().padStart(2, '0');
+    const el1 = document.getElementById('stat-uptime');
+    const el2 = document.getElementById('anal-uptime');
+    if (el1) el1.textContent = `${m}:${s}`;
+    if (el2) el2.textContent = `${h}:${m}:${s}`;
+  }, 1000);
+}
+
+// ─── Sparkline ────────────────────────────────────────────────────────────
+function drawSparkline(id, data, color, min, max) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth || 400, H = 48;
+  canvas.width = W; canvas.height = H;
+  ctx.clearRect(0, 0, W, H);
+  if (data.length < 2) return;
+  const range = max - min || 1;
+  const pts = data.map((v, i) => ({ x: (i / (data.length - 1)) * W, y: H - ((v - min) / range) * H }));
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  pts.slice(1).forEach(p => ctx.lineTo(p.x, p.y));
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  // Fill
+  ctx.lineTo(pts[pts.length - 1].x, H);
+  ctx.lineTo(0, H);
+  ctx.closePath();
+  ctx.fillStyle = color + '18';
+  ctx.fill();
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────
+async function init() {
+  startUptimeTimer();
+
+  if (window.phonecam) {
+    // ── Running inside Electron ──────────────────────────────────────────
+    // Step 1: get real IP + ports from main process
+    try {
+      state.appInfo = await window.phonecam.getAppInfo();
+      state.wsUrl   = state.appInfo.wsUrl;   // ws://IP:7779
+      state.httpUrl = state.appInfo.qrUrl;   // http://IP:7780
+    } catch (e) {
+      console.error('[Init] getAppInfo failed:', e);
+      const fallbackIP = location.hostname || '127.0.0.1';
+      state.wsUrl   = `ws://${fallbackIP}:7779`;
+      state.httpUrl = `http://${fallbackIP}:7780`;
+    }
+
+    // Update URL display fields
+    document.getElementById('http-url-display').textContent = state.httpUrl;
+    document.getElementById('manual-url-input').value        = state.wsUrl;
+
+    // Step 2b: Check driver status on Windows
+    if (state.appInfo?.platform === 'win32' || navigator.platform?.toLowerCase().includes('win')) {
+      try {
+        // force=true clears the post-uninstall override so we get real registry state
+        const driverInfo = await window.phonecam.driverStatus({ force: true });
+        refreshNativeDriverBanner(driverInfo.installed);
+        if (driverInfo.connected) updateDriverPipeStatus({ driverConnected: true, driverInstalled: true, mode: 'native' });
+      } catch(e) {
+        console.warn('[Init] driverStatus failed:', e.message);
+      }
+    }
+
+    // Step 3: render QR with real IP (IPC call to main process)
+    loadQR();
+
+    // Step 4: register IPC event listeners
+    // Remove any existing listeners before adding new (prevents duplicate handlers
+    // if init() is called more than once, e.g. after hot-reload)
+    window.phonecam.removeAllListeners?.('phone-connected');
+    window.phonecam.removeAllListeners?.('phone-disconnected');
+    window.phonecam.removeAllListeners?.('phone-settings-changed');
+    window.phonecam.removeAllListeners?.('vcam-status');
+    window.phonecam.removeAllListeners?.('video-frame');
+    window.phonecam.removeAllListeners?.('setup-log');
+
+    // setup-log: registered ONCE here — never inside renderSetupStatus
+    window.phonecam.on('setup-log', (line) => {
+      const logCard = document.getElementById('setup-log-card');
+      const log     = document.getElementById('setup-log');
+      if (logCard) logCard.style.display = 'block';
+      if (log)     { log.textContent += line; log.scrollTop = log.scrollHeight; }
+    });
+
+    // driver-status-changed: pushed by main.js after install/uninstall completes
+    // This is the AUTHORITATIVE sync — UI always reflects actual registry state
+    window.phonecam.removeAllListeners?.('driver-status-changed');
+    window.phonecam.onDriverStatusChanged((data) => {
+      const installed        = data.installed       === true;
+      const installerPresent = data.installerPresent === true;
+
+      // 1. Update the banner state immediately (no wait)
+      refreshNativeDriverBanner(installed);
+
+      // 2. Update OS badge
+      const badge = document.getElementById('setup-ready-badge');
+      if (badge) {
+        if (installed) {
+          badge.textContent      = '✅ Ready to stream';
+          badge.style.background = 'rgba(22,199,132,.15)';
+          badge.style.color      = 'var(--accent-g)';
+        } else {
+          badge.textContent      = '⚠ Setup required';
+          badge.style.background = 'rgba(245,166,35,.12)';
+          badge.style.color      = '#F5A623';
+        }
+      }
+
+      // 3. Update sidebar webcam card + steps UI
+      updateVcamUI();
+
+      // 4. Update the OS banner only if the function exists (setup wizard page)
+      if (typeof _applyDriverStatusToSetupBadge === 'function') {
+        _applyDriverStatusToSetupBadge(installed);
+      }
+    });
+
+    window.phonecam.onPhoneConnected(handlePhoneConnected);
+
+  // Sync UI when main.js restarts the MJPEG/vcam pipeline
+  if (window.phonecam.onResolutionChanged) {
+    window.phonecam.onResolutionChanged((data) => {
+      _syncResolutionUI(data.socketId, data.resolution, data.fps, null);
+    });
+  }
+    window.phonecam.onPhoneDisconnected(handlePhoneDisconnected);
+    window.phonecam.onPhoneSettingsChanged(handlePhoneSettingsChanged);
+    window.phonecam.onVcamStatus((data) => {
+      state.vcamActive            = data.active;
+      state._lastMjpegUrl         = data.mjpegUrl  || null;
+      state._lastVcamMode         = data.mode      || null;
+      if (data.activeSource !== undefined) {
+        state.activeWebcamSourceId = data.activeSource || null;
+        // If we have a new active source, set it as the preview source too
+        // (happens when first phone connects and main.js auto-starts streaming)
+        if (data.activeSource && !state.activePreviewSocket &&
+            state.phones.has(data.activeSource)) {
+          state.activePreviewSocket = data.activeSource;
+          const sel = document.getElementById('preview-source');
+          if (sel) sel.value = data.activeSource;
+        }
+      }
+      updateVcamUI();
+      // Update OBS card immediately
+      updateOBSCard(data.active, data.mjpegUrl);
+      // Refresh driver banner pipe status
+      updateDriverPipeStatus(data);
+      // Show MJPEG fallback URL if provided
+      if (data.mjpegUrl) {
+        const existing = document.getElementById('mjpeg-url-banner');
+        if (!existing) {
+          const banner = document.createElement('div');
+          banner.id = 'mjpeg-url-banner';
+          // Don't show the floating banner anymore — the OBS card handles it
+          // Just update the OBS card instead
+          updateOBSCard(true, data.mjpegUrl);
+        }
+      }
+    });
+
+    window.phonecam.onVideoFrame((payload) => {
+      try {
+        // payload is now { socketId, data } — handle both old string and new object
+        const socketId = (typeof payload === 'object' && payload.socketId) ? payload.socketId : null;
+        const base64   = (typeof payload === 'object' && payload.data)     ? payload.data     : payload;
+
+        _frameArrivalTime = Date.now(); // stamp arrival for latency calc
+        const bin   = atob(base64);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        const frameBlob = new Blob([bytes], { type: 'image/jpeg' });
+
+        // Always store per-phone frame for mini previews
+        if (socketId) _pendingFrames[socketId] = frameBlob;
+
+        // Route frame to main preview ONLY if:
+        //   1. A source is selected (activePreviewSocket is not empty)
+        //   2. This frame is from the active source phone
+        const activeSrc      = state.activePreviewSocket;
+        const noSourceMode   = (!activeSrc || activeSrc === '');
+        const isActiveSource = !noSourceMode && (!socketId || activeSrc === socketId);
+
+        if (isActiveSource) {
+          _pendingFrame = frameBlob;
+        }
+        // If "No source" — drop frame, don't update _pendingFrame at all
+
+        // ── Real metrics from actual frames ──────────────────────────────
+        const nowMs = Date.now();
+
+        // Real latency = time from frame arriving at desktop to being decoded
+        // We track _frameArrivalTime set just before atob() — measures decode+render lag
+        // Combined with frame interval gives end-to-end estimate
+        const decodeTime = Date.now() - _frameArrivalTime;
+
+        // Smoothed latency using rolling average (last 10 frames)
+        if (!state._latSamples) state._latSamples = [];
+        state._latSamples.push(decodeTime);
+        if (state._latSamples.length > 10) state._latSamples.shift();
+        const avgLat = Math.round(state._latSamples.reduce((a,b)=>a+b,0) / state._latSamples.length);
+
+        ['stat-latency','info-latency','anal-latency','hud-latency'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.textContent = id.includes('hud') ? `${avgLat}ms` : `${avgLat} ms`;
+        });
+        state.latencyHistory.push(avgLat);
+        if (state.latencyHistory.length > 60) state.latencyHistory.shift();
+        drawSparkline('latency-chart', state.latencyHistory, '#1B6FEB', 0, 100);
+
+        // Real fps counter
+        _frameCount++;
+        if (nowMs - _fpsTimer >= 1000) {
+          const realFps = Math.round(_frameCount * 1000 / (nowMs - _fpsTimer));
+          ['info-fps','anal-fps','hud-fps'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = id === 'hud-fps' ? `${realFps}fps` : realFps;
+          });
+          state.fpsHistory.push(realFps);
+          if (state.fpsHistory.length > 60) state.fpsHistory.shift();
+          drawSparkline('fps-chart', state.fpsHistory, '#16C784', 0, 60);
+          const qs = document.getElementById('quality-score');
+          if (qs) qs.textContent = realFps >= 28 ? '98' : realFps >= 20 ? '85' : '70';
+          _frameCount = 0;
+          _fpsTimer   = nowMs;
+        }
+        // Real data counter
+        state.totalData += bytes.length / (1024 * 1024);
+        const dataEl = document.getElementById('anal-data');
+        if (dataEl) dataEl.textContent = `${state.totalData.toFixed(1)} MB`;
+        // Real bitrate (Mbps) every second
+        if (!state._bitsThisSec) state._bitsThisSec = 0;
+        if (!state._bitsTimer) state._bitsTimer = nowMs;
+        state._bitsThisSec += bytes.length * 8;
+        if (nowMs - state._bitsTimer >= 1000) {
+          const mbps = (state._bitsThisSec / 1_000_000).toFixed(1);
+          const br = document.getElementById('info-bitrate');
+          if (br) br.textContent = `${mbps} Mbps`;
+          state._bitsThisSec = 0;
+          state._bitsTimer = nowMs;
+        }
+
+        // Schedule render on next animation frame
+        if (!_rafPending) {
+          _rafPending = true;
+          requestAnimationFrame(_renderFrame);
+        }
+      } catch (e) {
+        console.error('[PhoneCam] frame decode error:', e.message);
+      }
+    });
+
+        // Step 5: show onboarding on first launch
+    showOnboarding();
+
+  } else {
+    // ── Dev / browser preview mode (no Electron context) ────────────────
+    // Try to get IP from the browser URL itself (works when opened via http server)
+    const devIP   = location.hostname && location.hostname !== 'localhost'
+                    ? location.hostname
+                    : '127.0.0.1';
+    state.wsUrl   = `ws://${devIP}:7779`;
+    state.httpUrl = `http://${devIP}:7780`;
+
+    document.getElementById('http-url-display').textContent = state.httpUrl;
+    document.getElementById('manual-url-input').value        = state.wsUrl;
+
+    // Render QR using client-side qrcodejs library
+    loadQR();
+  }
+
+  updateTitlebar();
+}
+
+// ── Video rendering engine — TOP-LEVEL SCOPE ──────────────────────────────
+// All rendering vars and functions are at script scope so they are accessible
+// from switchPreviewSource(), handlePhoneDisconnected(), and any other handler.
+// ── Video frame rendering ─────────────────────────────────────────────
+// Production-grade JPEG renderer: base64 → Uint8Array → Blob → canvas
+// Uses requestAnimationFrame to stay in sync with display refresh rate.
+let _pendingFrame     = null;   // latest blob waiting to draw
+let _rafPending       = false;  // rAF already scheduled?
+let _frameCount       = 0;
+let _fpsTimer         = Date.now();
+let _lastFrameAt      = 0;
+let _frameArrivalTime = 0;      // timestamp when frame bytes arrived
+
+function _initCanvas() {
+  // Called before every frame render — ensures canvas is visible
+  // _initialized flag removed: we must re-show canvas on every reconnect
+  const mc = document.getElementById('preview-canvas');
+  if (!mc) return;
+  if (mc.style.display !== 'block') {
+    mc.style.display   = 'block';
+    mc.style.position  = 'absolute';
+    mc.style.inset     = '0';
+    mc.style.width     = '100%';
+    mc.style.height    = '100%';
+  }
+  const ov = document.getElementById('preview-empty');
+  if (ov && ov.style.display !== 'none') ov.style.display = 'none';
+  const hud = document.getElementById('preview-hud');
+  if (hud && hud.style.display !== 'flex') hud.style.display = 'flex';
+}
+
+// ── Canvas draw helper with rotation + mirror support ────────────────────
+// ─────────────────────────────────────────────────────────────────────────
+// CANVAS RENDERING ENGINE
+//
+// Approach: draw rotated pixels directly into the canvas buffer.
+// The canvas element fills its container via CSS (width:100%, height:100%).
+// The browser scales the canvas pixels to fit — this is correct because
+// canvas ignores object-fit but CSS stretches the element; since our output
+// pixel dimensions already match the desired aspect (rotated), it looks right.
+//
+// For rotation:
+//   0°/180° → output canvas is bm.width × bm.height  (landscape)
+//   90°/270° → output canvas is bm.height × bm.width (portrait)
+// ─────────────────────────────────────────────────────────────────────────
+
+// ── Canvas rendering engine ───────────────────────────────────────────────
+// ARCHITECTURE:
+//   canvas.width / canvas.height  = PIXEL dimensions of the decoded frame
+//   wrapper.style.aspectRatio     = "frameW/frameH" (set by _renderFrame)
+//   canvas CSS width/height       = 100% (fills wrapper)
+// This ensures the canvas buffer exactly matches the output area —
+// no stretching, no letterboxing, no blank bars.
+function _drawFrame(canvas, bm, deg, mirror) {
+  const is90 = (deg === 90 || deg === 270);
+  // Output canvas dimensions after rotation
+  const pw = is90 ? bm.height : bm.width;
+  const ph = is90 ? bm.width  : bm.height;
+
+  // Resize pixel buffer only when dimensions change (prevents flicker)
+  if (canvas.width !== pw || canvas.height !== ph) {
+    canvas.width  = pw;
+    canvas.height = ph;
+  }
+
+  const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
+
+  // Fast path: no transform needed
+  if (deg === 0 && !mirror) {
+    ctx.drawImage(bm, 0, 0, pw, ph);
+    return;
+  }
+
+  // Rotation + mirror path.
+  // Strategy: translate to output center, rotate, then draw image centered on origin.
+  // For 90/270 rotations the source image width/height are SWAPPED vs output.
+  ctx.save();
+  ctx.translate(pw / 2, ph / 2);
+  ctx.rotate(deg * Math.PI / 180);
+  if (mirror) ctx.scale(-1, 1);
+  // After rotation, source dimensions are what matter for centering:
+  // - 0/180°: source w=bm.width, h=bm.height → draw at -bm.width/2, -bm.height/2
+  // - 90/270°: rotated space has source w=bm.width, h=bm.height still (not swapped)
+  ctx.drawImage(bm, -bm.width / 2, -bm.height / 2, bm.width, bm.height);
+  ctx.restore();
+}
+
+// ── Clear a canvas to solid black ─────────────────────────────────────────
+function _clearCanvas(canvas) {
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d', { alpha: false });
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, canvas.width || canvas.offsetWidth || 2, canvas.height || canvas.offsetHeight || 2);
+}
+
+// Render generation counter — incremented on "no source" to cancel in-flight frames
+let _renderGen = 0;
+
+function _renderFrame() {
+  _rafPending = false;
+  const blob = _pendingFrame;
+  if (!blob) return;
+  _pendingFrame = null;
+
+  // Capture current generation — if "No source" is selected mid-flight, gen
+  // will have been incremented and this promise result is discarded
+  const myGen = _renderGen;
+
+  createImageBitmap(blob).then(bm => {
+    // Stale frame? Discard silently
+    if (myGen !== _renderGen) { bm.close(); return; }
+    _initCanvas();
+    const deg    = state.rotationDeg  || 0;
+    const mirror = state.mirrorEnabled || false;
+    const is90   = (deg === 90 || deg === 270);
+
+    // ── Main preview canvas ──────────────────────────────────────────
+    const mc = document.getElementById('preview-canvas');
+    if (mc) {
+      _drawFrame(mc, bm, deg, mirror);
+      // ── Auto-detect orientation + rotation from FIRST frame ─────────
+      //
+      // Android CameraX / Camera2 often delivers JPEG frames in the camera
+      // sensor's native orientation (landscape) even when the phone is held
+      // portrait. We detect this and auto-apply the correct rotation so the
+      // user sees an upright image immediately on connection.
+      //
+      // Detection matrix (raw pixel dimensions of the incoming JPEG):
+      //   rawW > rawH  → frame is landscape
+      //     • Phone held portrait → sensor delivered sideways → rotate 270°
+      //     • Phone held landscape → no rotation → stay at 0°
+      //   rawW < rawH  → frame is already portrait → no rotation needed
+      //   rawW == rawH → square sensor → no rotation
+      //
+      // We distinguish phone-portrait vs phone-landscape using the handshake
+      // resolution string stored in phone.resolution:
+      //   "640x480"   → phone was portrait (width < height in real world) but
+      //                 sensor delivered landscape → ROTATE 270
+      //   "1920x1080" → phone was landscape → NO ROTATE
+      //   If no handshake resolution: rely on frame dims alone.
+      //
+      if (!state._autoRotationDone) {
+        state._autoRotationDone = true;
+        const rawW = bm.width;
+        const rawH = bm.height;
+
+        // Get phone's reported resolution to infer real-world orientation
+        const activePhone = state.phones.get(state.activePreviewSocket);
+        const reportedRes = activePhone?.resolution || '';
+        const [repW, repH] = reportedRes.split('x').map(Number);
+
+        let needRotation = 0;  // degrees to apply
+
+        if (rawW > rawH) {
+          // Frame arrives landscape. Now decide if that's correct or sideways.
+          // If reported resolution has W < H (like 480x640), the phone was
+          // held portrait but sensor sent landscape → needs rotation.
+          const phoneIsPortrait = (repW && repH) ? repH > repW : false;
+          if (phoneIsPortrait) {
+            // Android usually needs 270° (CCW 90°) to upright a portrait frame
+            needRotation = 270;
+          }
+          // else: phone held landscape, frame is correct → no rotation
+        }
+        // rawH > rawW → frame already portrait → no rotation needed
+        // rawW === rawH → square → no rotation
+
+        if (needRotation !== state.rotationDeg) {
+          setRotation(needRotation, true);  // silent — no toast on auto
+        }
+
+        // Now compute the DISPLAY dimensions after rotation
+        const dispW = (needRotation === 90 || needRotation === 270) ? rawH : rawW;
+        const dispH = (needRotation === 90 || needRotation === 270) ? rawW : rawH;
+
+        // Pick nearest standard aspect ratio
+        const rat = dispW / dispH;
+        let autoRatio;
+        if      (rat > 2.0)              autoRatio = '21/9';
+        else if (rat > 1.5)              autoRatio = '16/9';
+        else if (rat > 1.1)              autoRatio = '4/3';
+        else if (Math.abs(rat - 1) < .1) autoRatio = '1/1';
+        else if (rat < 0.7)              autoRatio = '9/16';
+        else                             autoRatio = '4/3';
+
+        const picker = document.getElementById('aspect-ratio-picker');
+        if (picker) picker.value = autoRatio;
+        state.previewAspect     = autoRatio;
+        state._userPickedAspect = false;
+
+        // Apply wrapper dimensions
+        _applyAspectToWrapper(autoRatio, document.getElementById('main-preview'));
+      }
+
+      // ── Compute display dimensions for this frame ─────────────────────────────
+      const is90now  = (state.rotationDeg === 90 || state.rotationDeg === 270);
+      const frameW   = is90now ? bm.height : bm.width;
+      const frameH   = is90now ? bm.width  : bm.height;
+
+      // If user locked a specific aspect ratio, crop canvas to that ratio
+      // instead of using raw frame dimensions. This makes the canvas shape
+      // match the wrapper shape — no letterboxing or distortion.
+      let canvasW = frameW, canvasH = frameH;
+      if (state._userPickedAspect && state.previewAspect && state.previewAspect !== 'auto') {
+        const [rW, rH] = state.previewAspect.split('/').map(Number);
+        if (rW && rH) {
+          const targetRatio = rW / rH;
+          const srcRatio    = frameW / frameH;
+          if (targetRatio > srcRatio) {
+            canvasH = Math.round(canvasW / targetRatio);
+          } else {
+            canvasW = Math.round(canvasH * targetRatio);
+          }
+        }
+      }
+
+      const mainWrap = document.getElementById('main-preview');
+
+      if (mainWrap) {
+        // Only auto-update wrapper aspect when user has NOT explicitly picked a ratio.
+        // If _userPickedAspect=true, setAspectRatio() owns the wrapper style.
+        if (!state._userPickedAspect) {
+          const newRatio = `${frameW}/${frameH}`;
+          if (mainWrap.style.aspectRatio !== newRatio) {
+            mainWrap.style.aspectRatio = newRatio;
+          }
+        }
+      }
+
+      // Update picker to nearest named ratio (display only, doesn't affect rendering)
+      if (!state._userPickedAspect) {
+        _syncAspectPicker(frameW, frameH);
+      }
+
+      // Draw with aspect-ratio crop if user picked one
+      if (state._userPickedAspect && (canvasW !== frameW || canvasH !== frameH)) {
+        if (mc.width !== canvasW || mc.height !== canvasH) {
+          mc.width  = canvasW;
+          mc.height = canvasH;
+        }
+        // Draw cropped: center-crop the source to the target aspect
+        const ctx2 = mc.getContext('2d', { alpha: false, desynchronized: true });
+        const srcX = Math.round((frameW - canvasW) / 2);
+        const srcY = Math.round((frameH - canvasH) / 2);
+        // For rotated frames we need to draw through _drawFrame first into a temp canvas
+        const tmp = document.createElement('canvas');
+        tmp.width = frameW; tmp.height = frameH;
+        _drawFrame(tmp, bm, deg, mirror);
+        ctx2.drawImage(tmp, srcX, srcY, canvasW, canvasH, 0, 0, canvasW, canvasH);
+      } else {
+        _drawFrame(mc, bm, deg, mirror);
+      }
+      mc.style.display = 'block';
+      const emptyOv = document.getElementById('preview-empty');
+      if (emptyOv) emptyOv.style.display = 'none';
+      const hud = document.getElementById('preview-hud');
+      if (hud) hud.style.display = 'flex';
+    }
+
+    // ── Dashboard mini preview ───────────────────────────────────────
+    const dc = document.querySelector('#dash-preview canvas');
+    if (dc) {
+      _drawFrame(dc, bm, deg, mirror);
+      // Show canvas, hide overlay
+      if (dc.style.display !== 'block') {
+        dc.style.display  = 'block';
+        dc.style.position = 'absolute';
+        dc.style.inset    = '0';
+        dc.style.width    = '100%';
+        dc.style.height   = '100%';
+      }
+      const ov = document.querySelector('#dash-preview .preview-overlay');
+      if (ov) ov.style.display = 'none';
+      // Update dash wrapper aspect-ratio to exact frame dims
+      const dashWrap = document.getElementById('dash-preview');
+      if (dashWrap) {
+        const dRatio = is90 ? `${bm.height}/${bm.width}` : `${bm.width}/${bm.height}`;
+        if (dashWrap.style.aspectRatio !== dRatio) dashWrap.style.aspectRatio = dRatio;
+      }
+    }
+
+    // ── Device card mini previews ─────────────────────────────────────
+    // Each device card shows ITS OWN phone's frames (not just the active one)
+    document.querySelectorAll('.device-mini-canvas').forEach(dc2 => {
+      const sid = dc2.dataset.socketId;
+      // Use per-phone frame buffer if available; else use main bm if it's the same phone
+      const phoneBlob = _pendingFrames[sid];
+      if (phoneBlob) {
+        const miniGen = _renderGen;
+        createImageBitmap(phoneBlob).then(bm2 => {
+          if (miniGen !== _renderGen) { bm2.close(); return; }
+          _drawFrame(dc2, bm2, deg, mirror);
+          // Show the mini canvas
+          if (dc2.style.display !== 'block') {
+            dc2.style.display  = 'block';
+            dc2.style.position = 'absolute';
+            dc2.style.inset    = '0';
+            dc2.style.width    = '100%';
+            dc2.style.height   = '100%';
+          }
+          const ov2 = dc2.closest('.device-preview-wrap')?.querySelector('.preview-overlay');
+          if (ov2) ov2.style.display = 'none';
+          const wrap2 = dc2.closest('.device-preview-wrap');
+          if (wrap2) {
+            const mini90   = (deg === 90 || deg === 270);
+            const miniRatio = mini90
+              ? `${bm2.height}/${bm2.width}`
+              : `${bm2.width}/${bm2.height}`;
+            wrap2.style.height = '';
+            if (wrap2.style.aspectRatio !== miniRatio)
+              wrap2.style.aspectRatio = miniRatio;
+          }
+          bm2.close();
+        }).catch(() => {});
+      } else if (sid === state.activePreviewSocket) {
+        // Fallback: no per-phone buffer yet, use main bm
+        _drawFrame(dc2, bm, deg, mirror);
+        const ov2 = dc2.closest('.device-preview-wrap')?.querySelector('.preview-overlay');
+        if (ov2) ov2.style.display = 'none';
+      }
+    });
+
+    // ── HUD resolution ───────────────────────────────────────────────
+    const dispW = is90 ? bm.height : bm.width;
+    const dispH = is90 ? bm.width  : bm.height;
+    const resStr = dispW + '×' + dispH;
+    ['hud-res','stat-resolution'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = resStr;
+    });
+
+    // Release GPU texture memory immediately after render
+    bm.close();
+  }).catch(err => {
+    if (err && !String(err.message).includes('closed')) {
+      console.warn('[PhoneCam] Frame decode:', err.message);
+    }
+  });
+}
+
+
+
+// ── Utility: debounce & throttle ──────────────────────────────────────────────
+function debounce(fn, ms) {
+  let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+}
+function throttle(fn, ms) {
+  let last = 0;
+  return (...args) => {
+    const now = Date.now();
+    if (now - last >= ms) { last = now; fn(...args); }
+  };
+}
+// Throttled device list update — max once per 200ms to avoid layout thrash
+const updateDevicesListThrottled = throttle(() => {
+  if (typeof updateDevicesList === 'function') updateDevicesList();
+}, 200);
+// Throttled preview sources update
+const updatePreviewSourcesThrottled = throttle(() => {
+  if (typeof updatePreviewSources === 'function') updatePreviewSources();
+}, 300);
+
+// ── Per-phone JPEG frame buffers ─────────────────────────────────────────────
+// At outer script scope so all event handlers (handlePhoneDisconnected etc.)
+// can access them. Key = socketId, Value = latest JPEG Blob from that phone.
+const _pendingFrames = {};
+
+document.addEventListener('DOMContentLoaded', init);
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+  if (e.metaKey || e.ctrlKey) {
+    switch (e.key) {
+      case 'n': navigate('connect'); break;
+      case 'r': loadQR(); break;
+      case ',': navigate('settings'); break;
+    }
+  }
+});
+
+// ── Quality Settings ───────────────────────────────────────────────────────
+let _qualitySocketId  = null;
+let _selectedRes      = '1920x1080';
+let _selectedFps      = 30;
+
+function openQualitySettings(socketId) {
+  _qualitySocketId = socketId;
+  const modal = document.getElementById('quality-modal');
+  if (!modal) return;
+
+  // Find current phone settings
+  const phone = (window._phonesMap && window._phonesMap.get(socketId)) || state.connectedPhones?.get?.(socketId) || null;
+  const name  = phone?.deviceName || 'Phone';
+  const res   = phone?.resolution || '1920x1080';
+  const fps   = phone?.fps || 30;
+  const qual  = phone?.quality || 85;
+
+  document.getElementById('quality-phone-name').textContent = name;
+  document.getElementById('quality-slider').value = qual;
+  document.getElementById('quality-val').textContent = qual;
+
+  // Set active res button
+  _selectedRes = res;
+  document.querySelectorAll('.res-btn').forEach(b => {
+    const active = b.dataset.res === res;
+    b.style.borderColor = active ? 'var(--accent)' : 'var(--border)';
+    b.style.background  = active ? 'rgba(27,111,235,.12)' : 'var(--bg2)';
+    b.style.color       = active ? 'var(--accent)' : 'var(--text2)';
+    b.textContent       = b.textContent.replace(' ✓','') + (active ? ' ✓' : '');
+  });
+
+  // Set active fps button
+  _selectedFps = fps;
+  document.querySelectorAll('.fps-btn').forEach(b => {
+    const active = parseInt(b.dataset.fps) === fps;
+    b.style.borderColor = active ? 'var(--accent)' : 'var(--border)';
+    b.style.background  = active ? 'rgba(27,111,235,.12)' : 'var(--bg2)';
+    b.style.color       = active ? 'var(--accent)' : 'var(--text2)';
+    b.textContent       = b.textContent.replace(' ✓','') + (active ? ' ✓' : '');
+  });
+
+  updateQualityHint();
+  modal.style.display = 'flex';
+}
+
+function closeQualityModal() {
+  const modal = document.getElementById('quality-modal');
+  if (modal) modal.style.display = 'none';
+  _qualitySocketId = null;
+}
+
+function selectRes(btn) {
+  _selectedRes = btn.dataset.res;
+  document.querySelectorAll('.res-btn').forEach(b => {
+    const active = b === btn;
+    b.style.borderColor = active ? 'var(--accent)' : 'var(--border)';
+    b.style.background  = active ? 'rgba(27,111,235,.12)' : 'var(--bg2)';
+    b.style.color       = active ? 'var(--accent)' : 'var(--text2)';
+    b.textContent = b.textContent.replace(' ✓','') + (active ? ' ✓' : '');
+  });
+  updateQualityHint();
+}
+
+function selectFps(btn) {
+  _selectedFps = parseInt(btn.dataset.fps);
+  document.querySelectorAll('.fps-btn').forEach(b => {
+    const active = b === btn;
+    b.style.borderColor = active ? 'var(--accent)' : 'var(--border)';
+    b.style.background  = active ? 'rgba(27,111,235,.12)' : 'var(--bg2)';
+    b.style.color       = active ? 'var(--accent)' : 'var(--text2)';
+    b.textContent = b.textContent.replace(' ✓','') + (active ? ' ✓' : '');
+  });
+  updateQualityHint();
+}
+
+function updateQualityHint() {
+  const hint = document.getElementById('quality-hint');
+  if (!hint) return;
+  const q = parseInt(document.getElementById('quality-slider')?.value || 85);
+  const [w, h] = (_selectedRes || '1920x1080').split('x').map(Number);
+  const pixels = w * h;
+  if (pixels >= 3840*2160 || _selectedFps >= 60 || q >= 95) {
+    hint.textContent = '⚠ High settings — needs fast WiFi (5GHz recommended)';
+  } else if (pixels <= 854*480 || _selectedFps <= 15 || q <= 55) {
+    hint.textContent = '✅ Low bandwidth — great for slow networks or saving RAM';
+  } else {
+    hint.textContent = '✅ ' + _selectedRes + ' ' + _selectedFps + 'fps ' + q + '% — balanced quality and performance';
+  }
+}
+
+async function applyQualitySettings() {
+  if (!_qualitySocketId) return;
+  const quality = parseInt(document.getElementById('quality-slider').value);
+  try {
+    const result = await window.phonecam.phoneSetQuality(_qualitySocketId, _selectedRes, _selectedFps, quality);
+    // Sync ALL UI elements with new values
+    _syncResolutionUI(_qualitySocketId, _selectedRes, _selectedFps, quality);
+    toast('Camera updated — ' + _selectedRes.replace('x','×') + ' @ ' + _selectedFps + 'fps · ' + quality + '% quality', 'success', 3000);
+    closeQualityModal();
+  } catch(e) {
+    toast('Failed to update camera: ' + e.message, 'error');
+  }
+}
+
+</script>
+
+<!-- ── Quality Settings Modal ────────────────────────────────────────────── -->
+<div id="quality-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);align-items:center;justify-content:center">
+  <div style="background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:28px;width:380px;max-width:95vw;box-shadow:0 24px 64px rgba(0,0,0,.5)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div>
+        <div style="font-size:16px;font-weight:800;color:var(--text)">Camera Quality</div>
+        <div id="quality-phone-name" style="font-size:12px;color:var(--text3);margin-top:2px">Phone</div>
+      </div>
+      <button onclick="closeQualityModal()" style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text2);cursor:pointer;font-size:14px">✕</button>
+    </div>
+
+    <!-- Resolution -->
+    <div style="margin-bottom:16px">
+      <label style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:8px">Resolution</label>
+      <div id="res-options" style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="res-btn" data-res="3840x2160" onclick="selectRes(this)" style="padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text2);cursor:pointer;font-size:12px;font-weight:600">4K</button>
+        <button class="res-btn" data-res="1920x1080" onclick="selectRes(this)" style="padding:7px 14px;border-radius:8px;border:1px solid var(--accent);background:rgba(27,111,235,.12);color:var(--accent);cursor:pointer;font-size:12px;font-weight:600">1080p ✓</button>
+        <button class="res-btn" data-res="1280x720"  onclick="selectRes(this)" style="padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text2);cursor:pointer;font-size:12px;font-weight:600">720p</button>
+        <button class="res-btn" data-res="854x480"   onclick="selectRes(this)" style="padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text2);cursor:pointer;font-size:12px;font-weight:600">480p</button>
+      </div>
+    </div>
+
+    <!-- FPS -->
+    <div style="margin-bottom:16px">
+      <label style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:8px">Frame Rate</label>
+      <div id="fps-options" style="display:flex;gap:8px">
+        <button class="fps-btn" data-fps="60" onclick="selectFps(this)" style="padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text2);cursor:pointer;font-size:12px;font-weight:600">60 fps</button>
+        <button class="fps-btn" data-fps="30" onclick="selectFps(this)" style="padding:7px 14px;border-radius:8px;border:1px solid var(--accent);background:rgba(27,111,235,.12);color:var(--accent);cursor:pointer;font-size:12px;font-weight:600">30 fps ✓</button>
+        <button class="fps-btn" data-fps="24" onclick="selectFps(this)" style="padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text2);cursor:pointer;font-size:12px;font-weight:600">24 fps</button>
+        <button class="fps-btn" data-fps="15" onclick="selectFps(this)" style="padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text2);cursor:pointer;font-size:12px;font-weight:600">15 fps</button>
+      </div>
+    </div>
+
+    <!-- JPEG Quality -->
+    <div style="margin-bottom:24px">
+      <label style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:8px">
+        JPEG Quality — <span id="quality-val" style="color:var(--accent)">85</span>%
+        <span style="font-weight:400;margin-left:8px;color:var(--text3)">Higher = sharper but more data</span>
+      </label>
+      <input type="range" id="quality-slider" min="40" max="100" value="85"
+        oninput="document.getElementById('quality-val').textContent=this.value"
+        style="width:100%;accent-color:var(--accent)">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:4px">
+        <span>40% — Low RAM</span><span>70% — Balanced</span><span>100% — Max quality</span>
+      </div>
+    </div>
+
+    <!-- Preset hints -->
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:20px;font-size:12px;color:var(--text2)">
+      💡 <strong>Recommended:</strong>
+      <span id="quality-hint">1080p 30fps 85% — balanced quality and performance</span>
+    </div>
+
+    <div style="display:flex;gap:10px">
+      <button onclick="closeQualityModal()" class="btn btn-secondary" style="flex:1">Cancel</button>
+      <button onclick="applyQualitySettings()" class="btn btn-primary" style="flex:1">Apply Settings</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>

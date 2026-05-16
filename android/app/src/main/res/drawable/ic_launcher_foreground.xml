@@ -1,0 +1,31 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group android:translateX="22" android:translateY="22">
+        <!-- Main Camera Body -->
+        <path
+            android:fillColor="#1B6FEB"
+            android:pathData="M8,12c0,-2.2 1.8,-4 4,-4h40c2.2,0 4,1.8 4,4v32c0,2.2 -1.8,4 -4,4h-40c-2.2,0 -4,-1.8 -4,-4z"/>
+        <!-- Lens Outer -->
+        <path
+            android:fillColor="#0B0E1B"
+            android:pathData="M32,28m-14,0a14,14 0,1 1,28 0a14,14 0,1 1,-28 0"/>
+        <!-- Lens Inner -->
+        <path
+            android:fillColor="#1B6FEB"
+            android:pathData="M32,28m-8,0a8,8 0,1 1,16 0a8,8 0,1 1,-16 0"/>
+        <!-- Lens Glint -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:alpha="0.3"
+            android:pathData="M36,22a4,4 0,1 1,2 2"/>
+        <!-- Signal Waves -->
+        <path
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="2"
+            android:strokeLineCap="round"
+            android:pathData="M14,6c2,-2 6,-3 10,-3M8,2c4,-3 12,-4 20,-2"/>
+    </group>
+</vector>

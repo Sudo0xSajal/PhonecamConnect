@@ -1,0 +1,94 @@
+{
+  "name": "phonecam-connect",
+  "version": "1.0.0",
+  "description": "Turn your Android into a professional webcam \u2014 zero latency, 100% local",
+  "main": "src/main.js",
+  "author": "PhoneCam Connect <support@phonecam.app>",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build:win": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win --publish=never",
+    "build:linux": "electron-builder --linux --publish=never",
+    "build:all": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false ELECTRON_BUILDER_SKIP_WIN_SIGN=true electron-builder --win --linux",
+    "clean": "rimraf dist",
+    "build:prod": "electron-builder --win --publish=never",
+    "rebuild": "electron-rebuild"
+  },
+  "dependencies": {
+    "ws": "^8.16.0",
+    "express": "^4.18.3",
+    "qrcode": "^1.5.3",
+    "electron-log": "^5.1.2"
+  },
+  "devDependencies": {
+    "electron": "^29.1.1",
+    "electron-builder": "^26.0.0",
+    "cross-env": "^7.0.3"
+  },
+  "build": {
+    "appId": "com.phonecam.connect",
+    "productName": "PhoneCam Connect",
+    "copyright": "Copyright \u00a9 2026 PhoneCam Connect",
+    "icon": "assets/icon",
+    "asar": true,
+    "asarUnpack": [
+      "**/*.node"
+    ],
+    "directories": {
+      "output": "dist",
+      "buildResources": "assets"
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.ico",
+      "requestedExecutionLevel": "requireAdministrator",
+      "verifyUpdateCodeSignature": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "allowToChangeInstallationDirectory": true,
+      "allowElevation": true,
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico",
+      "installerHeaderIcon": "assets/icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "PhoneCam Connect",
+      "deleteAppDataOnUninstall": false
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "icon": "assets/icon.png",
+      "category": "Video",
+      "maintainer": "PhoneCam Connect <support@phonecam.app>"
+    },
+    "deb": {
+      "depends": [
+        "ffmpeg",
+        "v4l2loopback-dkms"
+      ]
+    },
+    "publish": null,
+    "compression": "maximum"
+  },
+  "keywords": [],
+  "type": "commonjs"
+}

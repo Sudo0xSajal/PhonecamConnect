@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="resolutions">
+        <item>1080p (1920x1080)</item>
+        <item>720p (1280x720)</item>
+        <item>4K (3840x2160)</item>
+        <item>480p (640x480)</item>
+    </string-array>
+
+    <string-array name="fps_options">
+        <item>30 fps</item>
+        <item>60 fps</item>
+        <item>24 fps</item>
+        <item>15 fps</item>
+    </string-array>
+</resources>
