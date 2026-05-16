@@ -138,8 +138,8 @@ Build the virtual camera driver separately, zip the installer, and attach as `Ph
 | Component | Folder | Produces | Upload as |
 |---|---|---|---|
 | Landing page | `website/` | `index.html` | GitHub Pages |
-| Windows app | `desktop/` | `PhoneCam-Setup.exe` | GitHub Release asset |
-| Android app | `android/` | `PhoneCam.apk` | GitHub Release asset |
+| Windows app | `desktop/` | `PhoneCam.Connect.Setup.1.0.0.exe` | GitHub Release asset |
+| Android app | `android/` | `Phonecam-Connect.apk` | GitHub Release asset |
 | Camera driver | `driver/` | `PhoneCam-Driver.zip` | GitHub Release asset |
 
 ---
