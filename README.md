@@ -20,9 +20,9 @@
 
 | What | File | Platform |
 |---|---|---|
-| **Desktop App** | [`PhoneCam-Setup.exe`](https://github.com/Sudo0xSajal/phonecam/releases/latest/download/PhoneCam.Connect.Setup.1.0.0.exe) | Windows 10/11 64-bit |
+| **Desktop App** | [`PhoneCam.Connect.Setup.1.0.0.exe`](https://github.com/Sudo0xSajal/PhonecamConnect/releases/download/v1.0.0/PhoneCam.Connect.Setup.1.0.0.exe) | Windows 10/11 64-bit |
 | **Virtual Camera Driver** | [`PhoneCam-Driver.zip`](https://github.com/Sudo0xSajal/PhonecamConnect/blob/main/driver/README.md) | Windows 10/11 64-bit |
-| **Android App** | [`PhoneCam.apk`](https://github.com/Sudo0xSajal/phonecam/releases/latest/download/Phonecam-Connect.apk) | Android 8.0+ |
+| **Android App** | [`Phonecam-Connect.apk`](https://github.com/Sudo0xSajal/PhonecamConnect/releases/download/v1.0.0/Phonecam-Connect.apk) | Android 8.0+ |
 
 > All links always point to the **latest release** automatically.
 
